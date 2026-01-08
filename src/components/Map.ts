@@ -405,7 +405,9 @@ export class MapComponent {
       cableGroup
         .append('path')
         .attr('class', 'cable-path')
-        .attr('d', lineGenerator(cable.points));
+        .attr('d', lineGenerator(cable.points))
+        .append('title')
+        .text(cable.name);
     });
   }
 

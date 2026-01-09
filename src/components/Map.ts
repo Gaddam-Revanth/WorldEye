@@ -245,7 +245,7 @@ export class MapComponent {
         if (e.ctrlKey) {
           // Pinch-to-zoom on trackpad
           const zoomDelta = -e.deltaY * 0.01;
-          this.state.zoom = Math.max(1, Math.min(4, this.state.zoom + zoomDelta));
+          this.state.zoom = Math.max(1, Math.min(10, this.state.zoom + zoomDelta));
         } else {
           // Two-finger scroll for pan, regular scroll for zoom
           if (Math.abs(e.deltaX) > Math.abs(e.deltaY) * 0.5 || e.shiftKey) {
@@ -256,7 +256,7 @@ export class MapComponent {
           } else {
             // Vertical scroll = zoom
             const zoomDelta = e.deltaY > 0 ? -0.15 : 0.15;
-            this.state.zoom = Math.max(1, Math.min(4, this.state.zoom + zoomDelta));
+            this.state.zoom = Math.max(1, Math.min(10, this.state.zoom + zoomDelta));
           }
         }
         this.applyTransform();
@@ -328,7 +328,7 @@ export class MapComponent {
           touch2.clientY - touch1.clientY
         );
         const scale = dist / lastTouchDist;
-        this.state.zoom = Math.max(1, Math.min(4, this.state.zoom * scale));
+        this.state.zoom = Math.max(1, Math.min(10, this.state.zoom * scale));
         lastTouchDist = dist;
 
         // Two-finger pan
@@ -940,7 +940,7 @@ export class MapComponent {
   }
 
   public zoomIn(): void {
-    this.state.zoom = Math.min(this.state.zoom + 0.5, 4);
+    this.state.zoom = Math.min(this.state.zoom + 0.5, 10);
     this.applyTransform();
   }
 

@@ -652,7 +652,7 @@ const FULL_FEEDS: Record<string, Feed[]> = {
     { name: 'NDTV Top Stories', url: rss('https://feeds.feedburner.com/ndtvnews-top-stories?format=xml'), lang: 'en' },
     { name: 'Indian Express (India)', url: rss('https://indianexpress.com/section/india/feed/'), lang: 'en' },
     { name: 'Hindustan Times (India)', url: rss('https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml'), lang: 'en' },
-    { name: 'Times of India (Top)', url: rss('https://timesofindia.indiatimes.com/rss.cms'), lang: 'en' },
+    { name: 'Times of India (Top Stories)', url: rss('https://timesofindia.indiatimes.com/rssfeedstopstories.cms'), lang: 'en' },
     { name: 'India Today (Top)', url: rss('https://www.indiatoday.in/rss/1206584'), lang: 'en' },
     { name: 'LiveMint (Top)', url: rss('https://www.livemint.com/rss/homepage'), lang: 'en' },
     { name: 'Business Standard (Top)', url: rss('https://www.business-standard.com/rss/home_page_top_stories.rss'), lang: 'en' },

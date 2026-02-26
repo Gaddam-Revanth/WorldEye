@@ -28,6 +28,35 @@ function redisCacheKey(symbols: string[]): string {
   return `${REDIS_CACHE_KEY}:${[...symbols].sort().join(',')}`;
 }
 
+// Mock data for local development (when API keys are not available)
+function generateMockQuotes(symbols: string[]): MarketQuote[] {
+  const mockData: Record<string, { name: string; basePrice: number; change: number }> = {
+    'AAPL': { name: 'Apple Inc.', basePrice: 190.50, change: 1.25 },
+    'GOOGL': { name: 'Alphabet Inc.', basePrice: 142.80, change: -0.85 },
+    'MSFT': { name: 'Microsoft Corp.', basePrice: 375.40, change: 2.15 },
+    'TSLA': { name: 'Tesla Inc.', basePrice: 238.90, change: -1.50 },
+    'AMZN': { name: 'Amazon.com Inc.', basePrice: 181.20, change: 0.95 },
+    'META': { name: 'Meta Platforms Inc.', basePrice: 485.30, change: 3.20 },
+    'NVDA': { name: 'NVIDIA Corp.', basePrice: 875.50, change: 4.10 },
+    'SPY': { name: 'S&P 500 ETF', basePrice: 450.75, change: 0.75 },
+  };
+
+  return symbols
+    .map(symbol => {
+      const mock = mockData[symbol];
+      if (!mock) return null;
+      return {
+        symbol,
+        name: mock.name,
+        display: symbol,
+        price: mock.basePrice,
+        change: mock.change,
+        sparkline: Array.from({ length: 30 }, (_, i) => mock.basePrice + (Math.sin(i / 5) * 5) + Math.random() * 2 - 1),
+      };
+    })
+    .filter((q): q is MarketQuote => q !== null);
+}
+
 export async function listMarketQuotes(
   _ctx: ServerContext,
   req: ListMarketQuotesRequest,
@@ -53,6 +82,12 @@ export async function listMarketQuotes(
     const yahooSymbols = symbols.filter((s) => YAHOO_ONLY_SYMBOLS.has(s));
 
     const quotes: MarketQuote[] = [];
+
+    // Use mock data if API key is not available (local development)
+    if (!apiKey) {
+      const mockQuotes = generateMockQuotes(symbols);
+      return { quotes: mockQuotes, finnhubSkipped: true, skipReason: 'Using mock data (FINNHUB_API_KEY not configured)' };
+    }
 
     // Fetch Finnhub quotes (only if API key is set)
     if (finnhubSymbols.length > 0 && apiKey) {

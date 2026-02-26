@@ -55,6 +55,7 @@ import {
   fetchShippingRates,
   fetchChokepointStatus,
   fetchCriticalMinerals,
+  fetchFreshWaterData,
 } from '@/services';
 import { mlWorker } from '@/services/ml-worker';
 import { clusterNewsHybrid } from '@/services/clustering';
@@ -95,6 +96,7 @@ import {
   PopulationExposurePanel,
   TradePolicyPanel,
   SupplyChainPanel,
+  FreshWaterPanel,
 } from '@/components';
 import { SatelliteFiresPanel } from '@/components/SatelliteFiresPanel';
 import { classifyNewsItem } from '@/services/positive-classifier';
@@ -169,6 +171,7 @@ export class DataLoaderManager implements AppModule {
       tasks.push({ name: 'oil', task: runGuarded('oil', () => this.loadOilAnalytics()) });
       tasks.push({ name: 'spending', task: runGuarded('spending', () => this.loadGovernmentSpending()) });
       tasks.push({ name: 'bis', task: runGuarded('bis', () => this.loadBisData()) });
+      tasks.push({ name: 'freshWater', task: runGuarded('freshWater', () => this.loadFreshWaterData()) });
 
       // Trade policy data (FULL and FINANCE only)
       if (SITE_VARIANT === 'full' || SITE_VARIANT === 'finance') {
@@ -1514,6 +1517,20 @@ export class DataLoaderManager implements AppModule {
       console.error('[App] BIS data failed:', e);
       this.ctx.statusPanel?.updateApi('BIS', { status: 'error' });
       dataFreshness.recordError('bis', String(e));
+    }
+  }
+
+  async loadFreshWaterData(): Promise<void> {
+    const panel = this.ctx.panels['fresh-water'] as FreshWaterPanel | undefined;
+    try {
+      const data = await fetchFreshWaterData();
+      panel?.setData(data);
+      this.ctx.statusPanel?.updateApi('Fresh Water', { status: 'ok' });
+      dataFreshness.recordUpdate('fresh_water', data.countries.length);
+    } catch (e) {
+      console.error('[App] Fresh water data failed:', e);
+      this.ctx.statusPanel?.updateApi('Fresh Water', { status: 'error' });
+      dataFreshness.recordError('fresh_water', String(e));
     }
   }
 

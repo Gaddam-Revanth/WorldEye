@@ -105,6 +105,31 @@ async function fetchEnergyPrices(commodities: string[]): Promise<EnergyPrice[]> 
   return results.filter((p): p is EnergyPrice => p !== null);
 }
 
+// Mock data for local development (when EIA_API_KEY is not available)
+function generateMockEnergyPrices(commodities?: string[]): EnergyPrice[] {
+  const mockData: Record<string, { name: string; basePrice: number; change: number; unit: string }> = {
+    'wti': { name: 'WTI Crude Oil', basePrice: 78.45, change: -1.20, unit: '$/barrel' },
+    'brent': { name: 'Brent Crude Oil', basePrice: 82.50, change: -0.85, unit: '$/barrel' },
+  };
+
+  const series = commodities && commodities.length > 0
+    ? EIA_SERIES.filter((s) => commodities.includes(s.commodity))
+    : EIA_SERIES;
+
+  return series.map((s) => {
+    const mock = mockData[s.commodity];
+    if (!mock) return null;
+    return {
+      commodity: s.commodity,
+      name: mock.name,
+      price: mock.basePrice,
+      unit: mock.unit,
+      change: mock.change,
+      priceAt: Date.now(),
+    };
+  }).filter((p): p is EnergyPrice => p !== null);
+}
+
 export async function getEnergyPrices(
   _ctx: ServerContext,
   req: GetEnergyPricesRequest,
@@ -113,10 +138,24 @@ export async function getEnergyPrices(
     const cacheKey = `${REDIS_CACHE_KEY}:${[...req.commodities].sort().join(',') || 'all'}`;
     const result = await cachedFetchJson<GetEnergyPricesResponse>(cacheKey, REDIS_CACHE_TTL, async () => {
       const prices = await fetchEnergyPrices(req.commodities);
+      // If no API key, use mock data
+      if (!process.env.EIA_API_KEY && (!prices || prices.length === 0)) {
+        return { prices: generateMockEnergyPrices(req.commodities) };
+      }
       return prices.length > 0 ? { prices } : null;
     });
+    // Fallback to mock data if result is empty and no API key
+    if (!result?.prices || result.prices.length === 0) {
+      if (!process.env.EIA_API_KEY) {
+        return { prices: generateMockEnergyPrices(req.commodities) };
+      }
+    }
     return result || { prices: [] };
   } catch {
+    // On error, try mock data if no API key
+    if (!process.env.EIA_API_KEY) {
+      return { prices: generateMockEnergyPrices(req.commodities) };
+    }
     return { prices: [] };
   }
 }

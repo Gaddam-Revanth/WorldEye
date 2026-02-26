@@ -111,6 +111,16 @@ export const OPTIONAL_LIVE_CHANNELS: LiveChannel[] = [
   { id: 'vtc-now', name: 'VTC NOW', handle: '@VTCNOW' },
   { id: 'cna-asia', name: 'CNA (NewsAsia)', handle: '@channelnewsasia' },
   { id: 'nhk-world', name: 'NHK World Japan', handle: '@NHKWORLDJAPAN' },
+  // India
+  { id: 'ndtv', name: 'NDTV', handle: '@ndtv' },
+  { id: 'aaj-tak', name: 'Aaj Tak', handle: '@aajtak' },
+  { id: 'india-today', name: 'India Today', handle: '@IndiaToday' },
+  { id: 'abp-news', name: 'ABP News', handle: '@abpnews' },
+  { id: 'times-now', name: 'Times NOW', handle: '@timesnow' },
+  { id: 'zee-news', name: 'Zee News', handle: '@zeenews' },
+  { id: 'news18-india', name: 'News18 India', handle: '@news18india' },
+  { id: 'dd-news', name: 'DD News', handle: '@DDNewsLive' },
+  { id: 'republic-bharat', name: 'Republic Bharat', handle: '@RepublicBharat' },
   // Africa
   { id: 'africanews', name: 'Africanews', handle: '@africanews' },
   { id: 'channels-tv', name: 'Channels TV', handle: '@channelstv' },
@@ -123,7 +133,7 @@ export const OPTIONAL_CHANNEL_REGIONS: { key: string; labelKey: string; channelI
   { key: 'na', labelKey: 'components.liveNews.regionNorthAmerica', channelIds: ['livenow-fox', 'fox-news', 'newsmax', 'abc-news', 'cbs-news', 'nbc-news'] },
   { key: 'eu', labelKey: 'components.liveNews.regionEurope', channelIds: ['welt', 'rtve', 'trt-haber', 'ntv-turkey', 'cnn-turk', 'tv-rain'] },
   { key: 'latam', labelKey: 'components.liveNews.regionLatinAmerica', channelIds: ['cnn-brasil', 'jovem-pan', 'record-news', 'band-jornalismo', 'tn-argentina', 'c5n', 'milenio', 'noticias-caracol', 'ntn24', 't13'] },
-  { key: 'asia', labelKey: 'components.liveNews.regionAsia', channelIds: ['tbs-news', 'ann-news', 'ntv-news', 'cti-news', 'wion', 'vtc-now', 'cna-asia', 'nhk-world'] },
+  { key: 'asia', labelKey: 'components.liveNews.regionAsia', channelIds: ['tbs-news', 'ann-news', 'ntv-news', 'cti-news', 'wion', 'vtc-now', 'cna-asia', 'nhk-world', 'ndtv', 'aaj-tak', 'india-today', 'abp-news', 'times-now', 'zee-news', 'news18-india', 'dd-news', 'republic-bharat'] },
   { key: 'africa', labelKey: 'components.liveNews.regionAfrica', channelIds: ['africanews', 'channels-tv', 'ktn-news', 'enca', 'sabc-news'] },
 ];
 

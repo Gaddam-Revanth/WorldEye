@@ -33,6 +33,7 @@ import {
   InvestmentsPanel,
   TradePolicyPanel,
   SupplyChainPanel,
+  FreshWaterPanel,
 } from '@/components';
 import { SatelliteFiresPanel } from '@/components/SatelliteFiresPanel';
 import { PositiveNewsFeedPanel } from '@/components/PositiveNewsFeedPanel';
@@ -446,6 +447,10 @@ export class PanelLayoutManager implements AppModule {
 
     const economicPanel = new EconomicPanel();
     this.ctx.panels['economic'] = economicPanel;
+
+    // new fresh water resources panel (user requested global water data)
+    const freshWaterPanel = new FreshWaterPanel();
+    this.ctx.panels['fresh-water'] = freshWaterPanel;
 
     if (SITE_VARIANT === 'full' || SITE_VARIANT === 'finance') {
       const tradePolicyPanel = new TradePolicyPanel();

@@ -1289,8 +1289,8 @@ Transactions are sampled at 10% to balance observability with cost. Release trac
 
 ```bash
 # Clone and run
-git clone https://github.com/koala73/worldmonitor.git
-cd worldmonitor
+git clone https://github.com/Gaddam-Revanth/WorldEye.git
+cd worldeye
 npm install
 vercel dev       # Runs frontend + all 60+ API edge functions
 ```
@@ -1607,9 +1607,9 @@ If you discover a vulnerability, please see our [Security Policy](./SECURITY.md)
 
 ## Star History
 
-<a href="https://api.star-history.com/svg?repos=koala73/worldmonitor&type=Date">
+<a href="https://api.star-history.com/svg?repos=Gaddam-Revanth/WorldEye&type=Date">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=koala73/worldmonitor&type=Date&type=Date&theme=dark" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=koala73/worldmonitor&type=Date&type=Date" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Gaddam-Revanth/WorldEye&type=Date&type=Date&theme=dark" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Gaddam-Revanth/WorldEye&type=Date&type=Date" />
  </picture>
 </a>

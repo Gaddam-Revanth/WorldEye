@@ -1,8 +1,8 @@
 [package]
-name = "world-monitor"
+name = "worldeye"
 version = "2.5.9"
-description = "World Monitor desktop application"
-authors = ["World Monitor"]
+description = "WorldEye desktop application"
+authors = ["WorldEye"]
 edition = "2021"
 
 [build-dependencies]

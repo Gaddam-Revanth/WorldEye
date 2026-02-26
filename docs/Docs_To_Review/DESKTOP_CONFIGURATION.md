@@ -36,7 +36,7 @@ Each feature includes:
 
 ## Desktop secret storage
 
-Desktop builds persist secrets in OS credential storage through Tauri command bindings backed by Rust `keyring` entries (`world-monitor` service namespace).
+Desktop builds persist secrets in OS credential storage through Tauri command bindings backed by Rust `keyring` entries (`worldeye` service namespace).
 
 Secrets are **not stored in plaintext files** by the frontend.
 

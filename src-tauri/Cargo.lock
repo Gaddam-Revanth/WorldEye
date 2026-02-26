@@ -4889,7 +4889,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "world-monitor"
+name = "worldeye"
 version = "2.5.8"
 dependencies = [
  "getrandom 0.2.17",

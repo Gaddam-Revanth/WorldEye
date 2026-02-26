@@ -3302,8 +3302,8 @@ const header = `World Monitor v${__APP_VERSION__}`;
 
 ```bash
 # Clone the repository
-git clone https://github.com/koala73/worldmonitor.git
-cd worldmonitor
+git clone https://github.com/Gaddam-Revanth/WorldEye.git
+cd worldeye
 
 # Install everything (buf, sebuf plugins, npm deps, proto deps)
 make install

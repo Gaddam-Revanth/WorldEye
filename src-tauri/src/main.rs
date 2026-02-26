@@ -19,7 +19,7 @@ use tauri::menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Manager, RunEvent, Webview, WebviewUrl, WebviewWindowBuilder, WindowEvent};
 
 const DEFAULT_LOCAL_API_PORT: u16 = 46123;
-const KEYRING_SERVICE: &str = "world-monitor";
+const KEYRING_SERVICE: &str = "worldeye";
 const LOCAL_API_LOG_FILE: &str = "local-api.log";
 const DESKTOP_LOG_FILE: &str = "desktop.log";
 const MENU_FILE_SETTINGS_ID: &str = "file.settings";
@@ -730,7 +730,7 @@ fn handle_menu_event(app: &AppHandle, event: tauri::menu::MenuEvent) {
             }
         }
         MENU_HELP_GITHUB_ID => {
-            let _ = open_in_shell("https://github.com/koala73/worldmonitor");
+            let _ = open_in_shell("https://github.com/Gaddam-Revanth/WorldEye");
         }
         #[cfg(feature = "devtools")]
         MENU_HELP_DEVTOOLS_ID => {
@@ -1215,7 +1215,7 @@ fn main() {
             Ok(())
         })
         .build(tauri::generate_context!())
-        .expect("error while running world-monitor tauri application")
+        .expect("error while running worldeye tauri application")
         .run(|app, event| {
             match &event {
                 // macOS: hide window on close instead of quitting (standard behavior)

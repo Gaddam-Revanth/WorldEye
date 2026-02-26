@@ -1,0 +1,143 @@
+# 🌍 WorldMonitor: Complete Technical & Functional Documentation
+
+WorldMonitor is a real-time global intelligence dashboard that aggregates data from 100+ sources, performs multi-signal analysis, and presents unified situational awareness through an interactive map and specialized panels.
+
+## 1. Project Overview
+The system operates entirely as a **browser-first** dashboard (TypeScript/Vite) with serverless backend functions (Vercel Edge) for API proxying and caching. It is designed to be a free alternative to expensive OSINT tools.
+
+### 1.1 Core Problems Solved
+- **News Fragmentation**: Consolidates 100+ curated feeds into one dashboard.
+- **Lack of Context**: Adds geospatial context (interactive map) to geopolitical events.
+- **Information Overload**: Uses AI to synthesize briefs and detect "focal points" of converging signals.
+- **Cost**: 100% free and open source.
+
+---
+
+## 2. Technology Stack
+
+### 2.1 Frontend
+- **Language**: TypeScript (80%+) - ensures type-safe interaction logic.
+- **Build Tool**: Vite - provides fast dev server and production bundles with tree-shaking.
+- **Map Engine**: 
+    - **deck.gl (WebGL)**: GPU-accelerated rendering for 25+ dynamic data layers.
+    - **MapLibre GL**: Vector tile base map rendering.
+- **Styles**: Custom Vanilla CSS (no Tailwind mentioned in core, though variants may use it).
+- **Browser AI**: 
+    - **Transformers.js (T5)**: Named Entity Recognition (NER) and sentiment analysis.
+    - **TensorFlow.js**: Fallback ML inference.
+
+### 2.2 Backend & Infrastructure
+- **Hosting**: Vercel (Frontend + Edge Functions).
+- **Edge Functions**: 60+ serverless functions handling specific data sources (proxying/normalizing).
+- **Caching**: **Upstash Redis** - cross-user deduplication, AI caching, and temporal baselines.
+- **Relay Server**: **Railway** - used for WebSocket streams (AIS) and bypassing Vercel IP blocks on specific RSS sources.
+- **API Contracts**: Protocol Buffers (buf/Sebuf) for typed contracts between Edge and Frontend.
+
+### 2.3 Desktop Application
+- **Framework**: **Tauri** (Rust-based).
+- **Architecture**: Wraps the dashboard with a **Node.js Sidecar** that handles local API requests, allowing for some local-first functionality and better performance for heavy data processing.
+
+---
+
+## 3. Data Sources & APIs
+
+| Source | Data Type | Usage |
+| :--- | :--- | :--- |
+| **ACLED / GDELT** | Armed Conflict / Protests | Global event monitoring. |
+| **OpenSky Network** | ADS-B Flight Data | Live military aircraft tracking (requires OAuth2 via Relay). |
+| **VesselFinder / AIS** | Ship Tracking | Naval vessel monitoring. |
+| **NASA FIRMS (VIIRS)** | Thermal Hotspots | Satellite-detected fires and explosions. |
+| **Cloudflare Radar** | Internet Outages | Real-time global connectivity monitoring. |
+| **USGS / NASA EONET** | Earthquakes / Disasters | Natural disaster tracking. |
+| **RSS Feeds** | General News | 100+ sources (Reuters, AP, BBC, etc.) tiered by credibility. |
+| **Polymarket** | Prediction Markets | Geopolitical probability shifts as leading indicators. |
+
+---
+
+## 4. Proprietary Algorithms & Logic
+
+### 4.1 Country Instability Index (CII)
+A real-time score (0-100) calculated per country based on:
+- **Baseline Risk (40%)**: Pre-configured structural fragility.
+- **Unrest Events (20%)**: Protest volume (logarithmic for democracies).
+- **Security Activity (20%)**: Flight density and naval clusters.
+- **Information Velocity (20%)**: Article frequency and severity.
+
+### 4.2 Anomaly Detection (Welford’s Algorithm)
+Instead of static thresholds, the system builds statistical baselines over 90 days. It detects "unusual" activity (e.g., higher flight volume than typical for a Tuesday in January) using Z-scores.
+
+### 4.3 Hybrid AI Pipeline
+1. **Keyword Classifier (Instant)**: Matches ~120 keywords for immediate severity scoring.
+2. **LLM Classifier (Async)**: Fires in the background (Groq Llama 3.1) to refine sentiment and categorization, overriding the keyword score if confidence is higher.
+
+### 4.4 Infrastructure Proximity Correlation
+Automatically calculates the Haversine distance between news events and critical infrastructure (nuclear plants, undersea cables, pipelines) within a 600km radius.
+
+---
+
+## 5. Technical Deep Dive: Implementation Details
+
+### 5.1 Hybrid Clustering Algorithm
+Found in `src/services/clustering.ts`, the news aggregation uses a two-step process:
+1.  **Stage 1 (Fast Jaccard)**: Performs immediate grouping based on shared tokens in headlines. This is done on the main thread for instant UI feedback.
+2.  **Stage 2 (Semantic Refinement)**: If the `mlWorker` (using `Transformers.js`) is available, it generates embeddings for the cluster titles. It then merges clusters that are semantically similar even if they don't share identical words.
+3.  **Conflict Resolution**: When merging clusters, it prioritizes the "primary source" based on **Source Tier** (Tier 1 like Reuters/AP > Tier 4 blogs).
+
+### 5.2 Country Instability (CII) scoring
+Managed by `src/services/country-instability.ts`, the score is normalized to a 0-100 range. 
+- **Learning Mode**: On initial load, the system enters a 15-minute "learning mode" to establish a baseline if cached scores aren't available.
+- **Component Data**: It aggregates:
+    - `protests`: Social unrest events normalized by fatalities.
+    - `security`: Military flights and naval vessel density.
+    - `information`: News counts and sentiment volatility.
+    - `outages`: Internet connectivity drops.
+
+### 5.3 Signal Aggregator
+Located in `src/services/signal-aggregator.ts`, this service acts as the central hub for the map. 
+- **Time Window**: Signals are kept in memory for a sliding **24-hour window** (`WINDOW_MS`).
+- **Regional Grouping**: It uses hardcoded `REGION_DEFINITIONS` (Middle East, East Asia, etc.) to detect "Multi-signal spikes" (convergence) within a specific geographic corridor.
+
+### 5.4 Multi-Variant Build System
+Controlled via `package.json` scripts and `VITE_VARIANT`:
+- **Tree-Shaking**: The build system uses the environment variable to exclude irrelevant JSON data (e.g., the `finance` build completely removes the `MILITARY_BASES` and `APT_GROUPS` datasets to reduce bundle size).
+- **Desktop Runtime**: In Tauri mode (`VITE_DESKTOP_RUNTIME=1`), the app connects to a local Node.js sidecar instead of the Vercel cloud endpoints, enabling offline/local-first use.
+
+---
+
+## 6. How to Recreate Your Own (Steps)
+
+### Phase 1: The Foundation
+1.  **Framework**: Initialize a **Vite + React + TypeScript** project.
+2.  **Base Map**: Setup **MapLibre GL** with free vector tiles (MapTiler or OpenStreetMap).
+3.  **Layers**: Integrate **deck.gl** for rendering point datasets (ScatterplotLayer) and lines (ArcLayer for flights).
+4.  **Deployment**: Setup **Vercel** with a free Hobby plan.
+
+### Phase 2: Data Aggregation
+1.  **RSS Proxy**: Create a Vercel Edge Function that takes a URL, fetches the XML, and returns JSON.
+2.  **GDELT Integration**: Fetch global event data from `api.gdeltproject.org`.
+3.  **NASA FIRMS**: Register for a free API key to get thermal hotspot data.
+4.  **Keyword Matching**: Copy the threat keyword list from `src/config/keywords.ts` (original repo) to build your initial scoring logic.
+
+### Phase 3: Intelligence & Persistence
+1.  **Upstash Redis**: Setup a free tier for caching RSS responses and AI summaries.
+2.  **Groq Cloud**: Use their free tier for **Llama 3.1** to generate "World Brief" summaries.
+3.  **Local AI**: Use **Transformers.js** if you want to perform NER (extracting country names from headlines) without any API costs.
+
+---
+
+## 6. Project Structure Highlights
+- `/api`: Vercel Edge Functions (API proxying).
+- `/src/App.ts`: The central orchestrator (the "God class").
+- `/src/components/DeckGLMap.ts`: Handles all 25+ deck.gl layers.
+- `/src/services`: Contains `clustering.ts`, `signal-aggregator.ts`, and `country-instability.ts`.
+- `/data`: Static JSON files for constant data (Military bases, pipelines, etc.).
+
+---
+
+> [!TIP]
+> **Pro Tip for Personal Use**: You can skip the complex Railway Relay and Tauri wrapper initially. Start with a pure Web PWA. Most RSS feeds will work through a standard Vercel Edge proxy unless they explicitly block Vercel (like CNN or UN).
+
+**Source Metadata**:
+- Author: Elie Habib
+- License: MIT
+- Repository: [Gaddam-Revanth/WorldEye](https://github.com/Gaddam-Revanth/WorldEye)

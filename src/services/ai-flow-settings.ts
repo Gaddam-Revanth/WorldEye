@@ -2,8 +2,11 @@
  * Quick Settings — Web-only user preferences for AI pipeline and map behavior.
  * Desktop (Tauri) manages AI config via its own settings window.
  *
- * TODO: Migrate panel visibility, sources, and language selector into this
- *       settings hub once the UI is extended with additional sections.
+ * This module also now exposes helpers for panel visibility, source
+ * preferences and language selection so that lightweight browser
+ * configuration lives in one place.  These functions simply wrap
+ * localStorage and emit events in case other parts of the app need to
+ * react.
  */
 
 const STORAGE_KEY_BROWSER_MODEL = 'wm-ai-flow-browser-model';
@@ -110,4 +113,70 @@ export function subscribeStreamQualityChange(cb: (quality: StreamQuality) => voi
   };
   window.addEventListener(STREAM_QUALITY_EVENT, handler);
   return () => window.removeEventListener(STREAM_QUALITY_EVENT, handler);
+}
+
+// ------------------------------------------------------------------
+// Panel visibility, sources & language helpers
+// ------------------------------------------------------------------
+
+export type PanelVisibility = Record<string, boolean>;
+const STORAGE_KEY_PANELS = 'worldmonitor-panels';
+
+export function getPanelVisibility(): PanelVisibility {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PANELS);
+    return raw ? (JSON.parse(raw) as PanelVisibility) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function setPanelVisibility(panels: PanelVisibility): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_PANELS, JSON.stringify(panels));
+  } catch {
+    // ignore quota errors
+  }
+  window.dispatchEvent(new CustomEvent('panels-changed', { detail: panels }));
+}
+
+export type SourcePreferences = string[];
+const STORAGE_KEY_SOURCES = 'wm-sources';
+
+export function getSourcePreferences(): SourcePreferences {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_SOURCES);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function setSourcePreferences(sources: SourcePreferences): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_SOURCES, JSON.stringify(sources));
+  } catch {
+    // ignore
+  }
+  window.dispatchEvent(new CustomEvent('sources-changed', { detail: sources }));
+}
+
+const STORAGE_KEY_LANGUAGE = 'wm-language';
+
+export function getLanguage(): string {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_LANGUAGE);
+    return raw || '';
+  } catch {
+    return '';
+  }
+}
+
+export function setLanguage(lang: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_LANGUAGE, lang);
+  } catch {
+    // ignore
+  }
+  window.dispatchEvent(new CustomEvent('language-changed', { detail: lang }));
 }

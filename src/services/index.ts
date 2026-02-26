@@ -40,3 +40,9 @@ export * from './cached-theater-posture';
 export * from './trade';
 export * from './supply-chain';
 export * from './fresh-water-data';
+// Intelligence Augmentation Systems
+export * from './alert-rules';
+export * from './event-deduplication';
+export * from './satellite-integration';
+export * from './anomaly-detection';
+export * from './intelligence-augmentation';

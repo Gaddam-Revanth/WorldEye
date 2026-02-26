@@ -1,51 +1,61 @@
-# World Monitor
+# WorldEye
 
-**Real-time global intelligence dashboard** — AI-powered news aggregation, geopolitical monitoring, and infrastructure tracking in a unified situational awareness interface.
+Real-time global intelligence dashboard for personal use — AI-powered news aggregation, geospatial layers, and market/infrastructure signals in one interface. Runs as a web app and desktop app (Tauri).
 
-[![GitHub stars](https://img.shields.io/github/stars/koala73/worldmonitor?style=social)](https://github.com/koala73/worldmonitor/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/koala73/worldmonitor?style=social)](https://github.com/koala73/worldmonitor/network/members)
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Last commit](https://img.shields.io/github/last-commit/koala73/worldmonitor)](https://github.com/koala73/worldmonitor/commits/main)
-[![Latest release](https://img.shields.io/github/v/release/koala73/worldmonitor?style=flat)](https://github.com/koala73/worldmonitor/releases/latest)
+This repository is a personal fork and rebrand (“WorldEye”). The software is distributed under AGPL-3.0; see LICENSE for details.
 
-<p align="center">
-  <a href="https://worldmonitor.app"><img src="https://img.shields.io/badge/Web_App-worldmonitor.app-blue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Web App"></a>&nbsp;
-  <a href="https://tech.worldmonitor.app"><img src="https://img.shields.io/badge/Tech_Variant-tech.worldmonitor.app-0891b2?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Tech Variant"></a>&nbsp;
-  <a href="https://finance.worldmonitor.app"><img src="https://img.shields.io/badge/Finance_Variant-finance.worldmonitor.app-059669?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Finance Variant"></a>
-</p>
+## Quick Start
 
-<p align="center">
-  <a href="https://worldmonitor.app/api/download?platform=windows-exe"><img src="https://img.shields.io/badge/Download-Windows_(.exe)-0078D4?style=for-the-badge&logo=windows&logoColor=white" alt="Download Windows"></a>&nbsp;
-  <a href="https://worldmonitor.app/api/download?platform=macos-arm64"><img src="https://img.shields.io/badge/Download-macOS_Apple_Silicon-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS ARM"></a>&nbsp;
-  <a href="https://worldmonitor.app/api/download?platform=macos-x64"><img src="https://img.shields.io/badge/Download-macOS_Intel-555555?style=for-the-badge&logo=apple&logoColor=white" alt="Download macOS Intel"></a>&nbsp;
-  <a href="https://worldmonitor.app/api/download?platform=linux-appimage"><img src="https://img.shields.io/badge/Download-Linux_(.AppImage)-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Download Linux"></a>
-</p>
+Clone and run locally:
 
-<p align="center">
-  <a href="./docs/DOCUMENTATION.md"><strong>Full Documentation</strong></a> &nbsp;·&nbsp;
-  <a href="https://github.com/koala73/worldmonitor/releases/latest"><strong>All Releases</strong></a>
-</p>
+1. Install dependencies
+   - Node.js 18+
+   - npm
+2. Install packages
+   - `npm install`
+3. Run development server (WorldEye variant)
+   - Windows PowerShell: `$env:VITE_VARIANT='worldeye'; npm run dev`
+   - Open the URL shown in the terminal (e.g. http://localhost:3001/)
 
-![World Monitor Dashboard](new-world-monitor.png)
+For the full local stack with API handlers, use Vercel’s emulator:
 
----
+1. `npm i -g vercel`
+2. `vercel login` and `vercel link`
+3. `vercel dev`
 
-## Why World Monitor?
+Panels that require server-side proxying (news, markets, AI, etc.) will only load when the edge functions are running (vercel dev or a deployment).
 
-| Problem                            | Solution                                                                                                   |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| News scattered across 100+ sources | **Single unified dashboard** with 100+ curated feeds                                                       |
-| No geospatial context for events   | **Interactive map** with 36+ toggleable data layers                                                        |
-| Information overload               | **AI-synthesized briefs** with focal point detection and local LLM support                                 |
-| Crypto/macro signal noise          | **7-signal market radar** with composite BUY/CASH verdict                                                  |
-| Expensive OSINT tools ($$$)        | **100% free & open source**                                                                                |
-| Static news feeds                  | **Real-time updates** with live video streams                                                              |
-| Cloud-dependent AI tools           | **Run AI locally** with Ollama/LM Studio — no API keys, no data leaves your machine                       |
-| Web-only dashboards                | **Native desktop app** (Tauri) for macOS, Windows, and Linux + installable PWA with offline map support    |
-| Flat 2D maps                       | **3D WebGL globe** with deck.gl rendering and 36+ toggleable data layers                                   |
-| Siloed financial data              | **Finance variant** with 92 stock exchanges, 19 financial centers, 13 central banks, BIS data, WTO trade policy, and Gulf FDI tracking |
-| Undocumented, fragile APIs         | **Proto-first API contracts** — 20 typed services with auto-generated clients, servers, and OpenAPI docs   |
+## Features
+
+- Interactive 3D/flat map with 36+ layers (conflicts, bases, cables, pipelines, outages, markets, etc.)
+- Live News with curated global sources and added Indian outlets (NDTV, Indian Express, Hindustan Times, TOI, ET, LiveMint, Business Standard, News18, etc.)
+- AI: local LLM support (Ollama/LM Studio) with cloud fallbacks and browser ML worker
+- Desktop app (Tauri) with a local sidecar for API handlers and OS keychain storage
+- Installable PWA with offline map tiles and caching
+
+## Notes
+
+- This fork removes public discussion/communication links in the UI.
+- Branding/assets and PWA manifest are variant-scoped for “WorldEye”.
+- Security best practices: no secrets in source; use OS keychain for desktop; environment variables for dev.
+
+## License
+
+GNU Affero General Public License v3.0 (AGPL-3.0). See LICENSE for the full text.
+
+Copyright © 2026
+
+| Problem                            | Solution                                                                                     |
+| ---------------------------------- | -------------------------------------------------------------------------------------------- |
+| News scattered across 100+ sources | Unified dashboard with curated feeds                                                         |
+| No geospatial context for events   | Interactive globe with 36+ layers                                                            |
+| Information overload               | AI summaries with local-first LLM pipeline                                                   |
+| Crypto/macro signal noise          | 7-signal market radar with composite verdict                                                 |
+| Expensive OSINT tools              | Free & open source (AGPL-3.0)                                                                |
+| Static news feeds                  | Real-time updates with live streams and webcams                                              |
+| Cloud-dependent AI                 | Local LLM support (Ollama/LM Studio) — no data leaves your machine                          |
+| Web-only dashboards                | Native desktop app (Tauri) and installable PWA                                               |
+| Flat 2D maps                       | 3D WebGL globe with deck.gl                                                                  |
 
 ---
 

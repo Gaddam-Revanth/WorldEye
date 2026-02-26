@@ -295,6 +295,20 @@ const ALLOWED_DOMAINS = [
   'www.nature.com',
   'www.livescience.com',
   'www.newscientist.com',
+  // India — major outlets
+  'indianexpress.com',
+  'www.indianexpress.com',
+  'www.hindustantimes.com',
+  'timesofindia.indiatimes.com',
+  'economictimes.indiatimes.com',
+  'www.indiatoday.in',
+  'www.livemint.com',
+  'www.business-standard.com',
+  'theprint.in',
+  'scroll.in',
+  'thewire.in',
+  'www.news18.com',
+  'www.ndtv.com',
 ];
 
 export default async function handler(req) {

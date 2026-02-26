@@ -10,14 +10,14 @@ interface StoryMeta {
   type: 'ciianalysis' | 'crisisalert' | 'dailybrief' | 'marketfocus';
 }
 
-const BASE_URL = 'https://worldmonitor.app';
-const DEFAULT_IMAGE = 'https://worldmonitor.app/favico/og-image.png';
+const BASE_URL = typeof window !== 'undefined' ? window.location.origin : '';
+const DEFAULT_IMAGE = `${BASE_URL}/favico/og-image.png`;
 
 export function updateMetaTagsForStory(meta: StoryMeta): void {
   const { countryCode, countryName, ciiScore, ciiLevel, trend, type } = meta;
   
   // Generate dynamic content
-  const title = `${countryName} Intelligence Brief | World Monitor`;
+  const title = `${countryName} Intelligence Brief | WorldEye`;
   const description = generateDescription(ciiScore, ciiLevel, trend, type, countryName);
   const storyUrl = `${BASE_URL}/api/story?c=${countryCode}&t=${type}`;
   let imageUrl = `${BASE_URL}/api/og-story?c=${countryCode}&t=${type}`;
@@ -48,8 +48,8 @@ export function updateMetaTagsForStory(meta: StoryMeta): void {
 }
 
 export function resetMetaTags(): void {
-  const defaultTitle = 'World Monitor - Global Situation with AI Insights';
-  const defaultDesc = 'AI-powered real-time global intelligence dashboard with live news, markets, military tracking, and geopolitical data.';
+  const defaultTitle = 'WorldEye - Global Situation with AI Insights';
+  const defaultDesc = 'WorldEye: AI-powered real-time global intelligence dashboard with live news, markets, military tracking, and geopolitical data.';
   
   setMetaTag('title', defaultTitle);
   setMetaTag('description', defaultDesc);
@@ -96,7 +96,7 @@ function generateDescription(
     parts.push(typeDescriptions[type]);
   }
   
-  return `World Monitor ${parts.join('. ')}. Free, open-source geopolitical intelligence.`;
+  return `WorldEye ${parts.join('. ')}. Free, open-source geopolitical intelligence.`;
 }
 
 function setMetaTag(property: string, content: string): void {

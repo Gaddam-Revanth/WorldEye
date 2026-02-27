@@ -96,7 +96,7 @@ export async function listCommodityQuotes(
     if (quotes.length === 0) {
       return { quotes: generateMockCommodityQuotes(symbols) };
     }
-    return quotes.length > 0 ? { quotes } : null;
+    return { quotes };
   });
 
   return result || { quotes: generateMockCommodityQuotes(symbols) };

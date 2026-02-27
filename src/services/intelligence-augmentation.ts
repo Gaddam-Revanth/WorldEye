@@ -112,7 +112,7 @@ async function augmentSingleEvent(event: ClusteredEvent, allEvents: ClusteredEve
   let escalationPrediction;
   try {
     anomalies = await analyzeEventAnomalies(event, recentEvents);
-    escalationPrediction = predictEventEscalation(event, 24);
+    escalationPrediction = predictEventEscalation(event);
   } catch (err) {
     console.warn('[IntelligenceAugmentation] Failed to analyze anomalies', err);
   }

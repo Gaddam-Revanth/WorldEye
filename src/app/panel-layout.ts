@@ -56,7 +56,6 @@ import {
   DEFAULT_PANELS,
   STORAGE_KEYS,
   SITE_VARIANT,
-  NUCLEAR_FACILITIES,
 } from '@/config';
 import { BETA_MODE } from '@/config/beta';
 import { t } from '@/services/i18n';

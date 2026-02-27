@@ -16,12 +16,41 @@ export const SECTORS: Sector[] = [
 ];
 
 export const COMMODITIES: Commodity[] = [
-  { symbol: '^VIX', name: 'VIX', display: 'VIX' },
-  { symbol: 'GC=F', name: 'Gold', display: 'GOLD' },
-  { symbol: 'CL=F', name: 'Crude Oil', display: 'OIL' },
+  // Energy Commodities
+  { symbol: 'CL=F', name: 'Crude Oil WTI', display: 'WTI CRUDE' },
+  { symbol: 'BZ=F', name: 'Brent Crude', display: 'BRENT' },
   { symbol: 'NG=F', name: 'Natural Gas', display: 'NATGAS' },
-  { symbol: 'SI=F', name: 'Silver', display: 'SILVER' },
+  { symbol: 'UGA=F', name: 'Uranium', display: 'URANIUM' },
+  
+  // Industrial Metals
   { symbol: 'HG=F', name: 'Copper', display: 'COPPER' },
+  { symbol: 'AL=F', name: 'Aluminum', display: 'ALUM' },
+  { symbol: 'ZN=F', name: 'Zinc', display: 'ZINC' },
+  { symbol: 'NI=F', name: 'Nickel', display: 'NICKEL' },
+  { symbol: 'SN=F', name: 'Tin', display: 'TIN' },
+  
+  // Precious Metals
+  { symbol: 'GC=F', name: 'Gold', display: 'GOLD' },
+  { symbol: 'SI=F', name: 'Silver', display: 'SILVER' },
+  { symbol: 'PL=F', name: 'Platinum', display: 'PLAT' },
+  { symbol: 'PA=F', name: 'Palladium', display: 'PALLADIUM' },
+  
+  // Agricultural Commodities
+  { symbol: 'ZW=F', name: 'Wheat', display: 'WHEAT' },
+  { symbol: 'ZC=F', name: 'Corn', display: 'CORN' },
+  { symbol: 'ZS=F', name: 'Soybeans', display: 'SOYBEANS' },
+  { symbol: 'ZR=F', name: 'Rice', display: 'RICE' },
+  { symbol: 'SB=F', name: 'Sugar', display: 'SUGAR' },
+  { symbol: 'CT=F', name: 'Cotton', display: 'COTTON' },
+  { symbol: 'CC=F', name: 'Cocoa', display: 'COCOA' },
+  { symbol: 'KC=F', name: 'Coffee', display: 'COFFEE' },
+  
+  // Freight & Market Indicators
+  { symbol: '^VIX', name: 'VIX Volatility', display: 'VIX' },
+  { symbol: '^BVSP', name: 'Baltic Dry Index', display: 'BDI' },
+  
+  // Major Energy & Industrial Indices
+  { symbol: 'DXY=F', name: 'USD Index', display: 'DXY' },
 ];
 
 export const MARKET_SYMBOLS: MarketSymbol[] = [

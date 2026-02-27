@@ -27,7 +27,7 @@ export const PREDICTION_SHIFT_THRESHOLD = 5;
 export const MARKET_MOVE_THRESHOLD = 2;
 export const NEWS_VELOCITY_THRESHOLD = 3;
 export const FLOW_PRICE_THRESHOLD = 1.5;
-export const ENERGY_COMMODITY_SYMBOLS = new Set(['CL=F', 'NG=F']);
+export const ENERGY_COMMODITY_SYMBOLS = new Set(['CL=F', 'BZ=F', 'NG=F', 'UGA=F']);
 
 export const PIPELINE_KEYWORDS = ['pipeline', 'pipelines', 'line', 'terminal'];
 export const FLOW_DROP_KEYWORDS = [

@@ -35,7 +35,8 @@ export type DataSourceId =
   | 'giving'         // Global giving activity data
   | 'bis'            // BIS central bank data
   | 'wto_trade'      // WTO trade policy data
-  | 'supply_chain';  // Supply chain disruption intelligence
+  | 'supply_chain'    // Supply chain disruption intelligence
+  | 'fresh_water';    // Fresh water data (countries list)
 
 export type FreshnessStatus = 'fresh' | 'stale' | 'very_stale' | 'no_data' | 'disabled' | 'error';
 
@@ -101,6 +102,7 @@ const SOURCE_METADATA: Record<DataSourceId, { name: string; requiredForRisk: boo
   bis: { name: 'BIS Central Banks', requiredForRisk: false, panelId: 'economic' },
   wto_trade: { name: 'WTO Trade Policy', requiredForRisk: false, panelId: 'trade-policy' },
   supply_chain: { name: 'Supply Chain Intelligence', requiredForRisk: false, panelId: 'supply-chain' },
+  fresh_water: { name: 'Fresh Water Data', requiredForRisk: false, panelId: 'fresh-water' },
 };
 
 class DataFreshnessTracker {
@@ -356,6 +358,7 @@ const INTELLIGENCE_GAP_MESSAGES: Record<DataSourceId, string> = {
   climate: 'Climate anomaly data unavailable—extreme weather patterns undetected',
   worldpop: 'Population exposure data unavailable—affected population unknown',
   giving: 'Global giving activity data unavailable',
+  fresh_water: 'Fresh water availability data unavailable',
   bis: 'Central bank policy data may be stale—BIS feed unavailable',
   wto_trade: 'Trade policy intelligence unavailable—WTO data not updating',
   supply_chain: 'Supply chain disruption status unavailable—chokepoint monitoring offline',

@@ -543,6 +543,16 @@
         "undefined": "Undefined"
       }
     },
+    "nuclearPlants": {
+      "infoTooltip": "List of civilian nuclear power plants worldwide. Data from IAEA and open-source databases.",
+      "searchPlaceholder": "Search nuclear plants...",
+      "name": "Name",
+      "operator": "Operator",
+      "type": "Type",
+      "coordinates": "Coordinates",
+      "status": "Status",
+      "noPlants": "No nuclear plants available"
+    },
     "economic": {
       "indicators": "Indicators",
       "oil": "Oil",

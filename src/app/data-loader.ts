@@ -17,6 +17,7 @@ import {
   getFeedFailures,
   fetchMultipleStocks,
   fetchCrypto,
+  fetchCommodities,
   fetchPredictions,
   fetchEarthquakes,
   fetchWeatherAlerts,
@@ -681,7 +682,7 @@ export class DataLoaderManager implements AppModule {
       }
 
       const commoditiesPanel = this.ctx.panels['commodities'] as CommoditiesPanel;
-      const mapCommodity = (c: MarketData) => ({ display: c.display, price: c.price, change: c.change, sparkline: c.sparkline });
+      const mapCommodity = (c: MarketData): { display: string; price: number | null; change: number | null; sparkline?: number[] } => ({ display: c.display, price: c.price, change: c.change, sparkline: c.sparkline });
 
       let commoditiesLoaded = false;
       for (let attempt = 0; attempt < 3 && !commoditiesLoaded; attempt++) {
@@ -689,11 +690,11 @@ export class DataLoaderManager implements AppModule {
           commoditiesPanel.showRetrying();
           await new Promise(r => setTimeout(r, 20_000));
         }
-        const commoditiesResult = await fetchMultipleStocks(COMMODITIES, {
-          onBatch: (partial) => commoditiesPanel.renderCommodities(partial.map(mapCommodity)),
+        const commoditiesResult = await fetchCommodities(COMMODITIES, {
+          onBatch: (partial: MarketData[]) => commoditiesPanel.renderCommodities(partial.map(mapCommodity)),
         });
         const mapped = commoditiesResult.data.map(mapCommodity);
-        if (mapped.some(d => d.price !== null)) {
+        if (mapped.some((d: { price: number | null }) => d.price !== null)) {
           commoditiesPanel.renderCommodities(mapped);
           commoditiesLoaded = true;
         }

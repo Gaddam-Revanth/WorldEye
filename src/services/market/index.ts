@@ -9,8 +9,10 @@ import {
   MarketServiceClient,
   type ListMarketQuotesResponse,
   type ListCryptoQuotesResponse,
+  type ListCommodityQuotesResponse,
   type MarketQuote as ProtoMarketQuote,
   type CryptoQuote as ProtoCryptoQuote,
+  type CommodityQuote as ProtoCommodityQuote,
 } from '@/generated/client/worldmonitor/market/v1/service_client';
 import type { MarketData, CryptoData } from '@/types';
 import { createCircuitBreaker } from '@/utils';
@@ -20,9 +22,11 @@ import { createCircuitBreaker } from '@/utils';
 const client = new MarketServiceClient('', { fetch: (...args: Parameters<typeof fetch>) => globalThis.fetch(...args) });
 const stockBreaker = createCircuitBreaker<ListMarketQuotesResponse>({ name: 'Market Quotes', cacheTtlMs: 0 });
 const cryptoBreaker = createCircuitBreaker<ListCryptoQuotesResponse>({ name: 'Crypto Quotes' });
+const commodityBreaker = createCircuitBreaker<ListCommodityQuotesResponse>({ name: 'Commodity Quotes' });
 
 const emptyStockFallback: ListMarketQuotesResponse = { quotes: [], finnhubSkipped: false, skipReason: '' };
 const emptyCryptoFallback: ListCryptoQuotesResponse = { quotes: [] };
+const emptyCommodityFallback: ListCommodityQuotesResponse = { quotes: [] };
 
 // ---- Proto -> legacy adapters ----
 
@@ -132,4 +136,34 @@ export async function fetchCrypto(): Promise<CryptoData[]> {
   }
 
   return lastSuccessfulCrypto;
+}
+
+// ========================================================================
+// Commodities -- new wrapper that calls listCommodityQuotes
+// ========================================================================
+
+let lastSuccessfulCommodities: MarketData[] = [];
+
+export async function fetchCommodities(
+  symbols: Array<{ symbol: string; name?: string; display?: string }>,
+  options: { onBatch?: (results: MarketData[]) => void } = {},
+): Promise<MarketFetchResult> {
+  const symbolStrings = symbols.map(s => s.symbol);
+
+  const resp = await commodityBreaker.execute(async () => {
+    return client.listCommodityQuotes({ symbols: symbolStrings });
+  }, emptyCommodityFallback);
+
+  const results = resp.quotes.map((q: ProtoCommodityQuote) => {
+    const meta = symbols.find(s => s.symbol === q.symbol);
+    return toMarketData(q as ProtoMarketQuote, meta ? { name: meta.name, display: meta.display } : undefined);
+  });
+
+  if (results.length > 0) {
+    options.onBatch?.(results);
+    lastSuccessfulCommodities = results;
+  }
+
+  const data = results.length > 0 ? results : lastSuccessfulCommodities;
+  return { data, skipped: undefined, reason: undefined };
 }

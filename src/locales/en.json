@@ -558,6 +558,7 @@
       "infoTooltip": "Official gold holdings of countries (US$), fetched live from World Bank.",
       "searchPlaceholder": "Search country...",
       "country": "Country",
+      "tons": "Tons",
       "reserves": "Reserves",
       "noData": "No data available"
     },

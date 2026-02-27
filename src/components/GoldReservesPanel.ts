@@ -3,10 +3,17 @@ import { fetchGoldReserves } from '@/services/gold-reserves';
 import { t } from '@/services/i18n';
 import { escapeHtml } from '@/utils/sanitize';
 
+function formatTons(tons?: number): string {
+  if (tons === undefined) return 'N/A';
+  return `${tons.toFixed(1)} t`;
+}
+
 function formatValue(val: number): string {
   if (val === 0) return t('components.goldReserves.noData');
-  // convert to billions USD
-  return `$${(val / 1e9).toFixed(1)}B`;
+  // convert to billions/trillions with suffix
+  if (val >= 1e12) return `$${(val / 1e12).toFixed(1)}T`;
+  if (val >= 1e9) return `$${(val / 1e9).toFixed(1)}B`;
+  return `$${(val / 1e6).toFixed(1)}M`;
 }
 
 export class GoldReservesPanel extends Panel {
@@ -29,6 +36,7 @@ export class GoldReservesPanel extends Panel {
         (d) => `
       <tr data-country="${escapeHtml(d.country)}" class="gold-row">
         <td><strong>${escapeHtml(d.country)}</strong></td>
+        <td>${formatTons(d.tons)}</td>
         <td>${formatValue(d.value)}</td>
       </tr>
     `
@@ -44,10 +52,11 @@ export class GoldReservesPanel extends Panel {
           <thead>
             <tr>
               <th>${t('components.goldReserves.country')}</th>
+              <th>${t('components.goldReserves.tons')}</th>
               <th>${t('components.goldReserves.reserves')}</th>
             </tr>
           </thead>
-          <tbody>${rows || `<tr><td colspan="2">${t('components.goldReserves.noData')}</td></tr>`}</tbody>
+          <tbody>${rows || `<tr><td colspan="3">${t('components.goldReserves.noData')}</td></tr>`}</tbody>
         </table>
       </div>
     `;

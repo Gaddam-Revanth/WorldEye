@@ -2,6 +2,8 @@ import { GOLD_RESERVES, type GoldReserve } from '@/config/gold';
 
 const CACHE_KEY = 'gold-reserves-cache';
 
+const USD_PER_TON = 600000000; // approximate $600M per metric ton (adjust as needed)
+
 export async function fetchGoldReserves(): Promise<GoldReserve[]> {
   // try local cache first
   try {
@@ -18,10 +20,14 @@ export async function fetchGoldReserves(): Promise<GoldReserve[]> {
     const json = await res.json();
     if (Array.isArray(json) && Array.isArray(json[1])) {
       const list = (json[1] as any[])
-        .map((item) => ({
-          country: item.country?.value ?? '',
-          value: item.value ?? 0,
-        }))
+        .map((item) => {
+          const val = item.value ?? 0;
+          return {
+            country: item.country?.value ?? '',
+            value: val,
+            tons: val ? val / USD_PER_TON : undefined,
+          };
+        })
         .filter((r) => r.country);
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify(list));

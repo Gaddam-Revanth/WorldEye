@@ -46,9 +46,13 @@ test('GoldReservesPanel loads live data and responds to search', async ({ page }
     await wait(100);
     const filtered = root.querySelectorAll('tbody tr').length;
 
-    return { rowCount, filtered };
+    // also ensure each row has 3 columns (country/tons/value)
+    const colCount = (root.querySelector('tbody tr') as HTMLElement)?.children.length || 0;
+
+    return { rowCount, filtered, colCount };
   });
 
   expect(result.rowCount).toBeGreaterThan(0);
   expect(result.filtered).toBe(1);
+  expect(result.colCount).toBe(3);
 });

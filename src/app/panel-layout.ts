@@ -54,6 +54,7 @@ import {
   DEFAULT_PANELS,
   STORAGE_KEYS,
   SITE_VARIANT,
+  NUCLEAR_FACILITIES,
 } from '@/config';
 import { BETA_MODE } from '@/config/beta';
 import { t } from '@/services/i18n';
@@ -527,6 +528,23 @@ export class PanelLayoutManager implements AppModule {
         this.ctx.map?.setCenter(lat, lon, 5);
       });
       this.ctx.panels['ucdp-events'] = ucdpEventsPanel;
+
+      // nuclear plants panel (uses same geo data as nuclear layer)
+      import('./../components/NuclearPlantsPanel').then(({ NuclearPlantsPanel }) => {
+        const npPanel = new NuclearPlantsPanel();
+        // wire selection event so map centers on plant and shows layer
+        window.addEventListener('nuclear-plant-selected', (ev: any) => {
+          const id = ev.detail?.id;
+          const plant = npPanel && id ? 
+            (NUCLEAR_FACILITIES.find(f => f.id === id)) : null;
+          if (plant) {
+            this.ctx.map?.enableLayer('nuclear');
+            this.ctx.mapLayers.nuclear = true;
+            setTimeout(() => this.ctx.map?.triggerNuclearClick(id), 100);
+          }
+        });
+        this.ctx.panels['nuclear-plants'] = npPanel;
+      });
 
       const displacementPanel = new DisplacementPanel();
       displacementPanel.setCountryClickHandler((lat, lon) => {

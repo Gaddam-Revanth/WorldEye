@@ -92,6 +92,7 @@ export const COMMANDS: Command[] = [
   { id: 'panel:macro-signals', keywords: ['macro', 'macro signals', 'liquidity'], label: 'Jump to Market Radar', icon: '\u{1F4C9}', category: 'panels' },
   { id: 'panel:etf-flows', keywords: ['etf', 'etf flows', 'fund flows'], label: 'Jump to BTC ETF Tracker', icon: '\u{1F4B9}', category: 'panels' },
   { id: 'panel:stablecoins', keywords: ['stablecoins', 'usdt', 'usdc'], label: 'Jump to Stablecoins', icon: '\u{1FA99}', category: 'panels' },
+  { id: 'panel:nuclear-plants', keywords: ['nuclear plants', 'power plants', 'reactors'], label: 'Jump to Nuclear Power Plants', icon: '\u269B\uFE0F', category: 'panels' },
   { id: 'panel:monitors', keywords: ['monitors', 'my monitors', 'watchlist'], label: 'Jump to My Monitors', icon: '\u{1F4CB}', category: 'panels' },
 
   // View / settings

@@ -293,6 +293,8 @@ export class SearchManager implements AppModule {
         this.ctx.map?.setView('global');
         this.ctx.map?.enableLayer('nuclear');
         this.ctx.mapLayers.nuclear = true;
+        // focus panel list as well if plant panel exists
+        this.scrollToPanel('nuclear-plants');
         setTimeout(() => { this.ctx.map?.triggerNuclearClick(nuc.id); }, 300);
         break;
       }

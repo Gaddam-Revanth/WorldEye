@@ -1024,6 +1024,9 @@ export const UNDERSEA_CABLES: UnderseaCable[] = [
 ];
 
 export const NUCLEAR_FACILITIES: NuclearFacility[] = [
+  // A small sample list — expand with full dataset as needed
+  { id: 'npp-ochi-kag', name: 'Kashiwazaki-Kariwa Nuclear Power Plant', lat: 37.421, lon: 138.608, type: 'plant', status: 'active', operator: 'Japan' },
+  { id: 'npp-zhang-1', name: 'Zhangjiang Nuclear Power Plant', lat: 31.230, lon: 121.473, type: 'plant', status: 'construction', operator: 'China' },
   // US Nuclear Labs & Weapons Complex
   { id: 'los_alamos', name: 'Los Alamos', lat: 35.88, lon: -106.31, type: 'weapons', status: 'active' },
   { id: 'sandia', name: 'Sandia Labs', lat: 35.04, lon: -106.54, type: 'weapons', status: 'active' },

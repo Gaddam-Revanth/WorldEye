@@ -43,3 +43,4 @@ export * from './TradePolicyPanel';
 export * from './SupplyChainPanel';
 export * from './FreshWaterPanel';
 export * from './NuclearPlantsPanel';
+export * from './GoldReservesPanel';

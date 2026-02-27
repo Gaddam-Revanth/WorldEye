@@ -206,7 +206,8 @@
     "gccInvestments": "GCC Investments",
     "geoHubs": "Geopolitical Hubs",
     "liveWebcams": "Live Webcams",
-    "nuclearPlants": "Nuclear Power Plants"
+    "nuclearPlants": "Nuclear Power Plants",
+    "goldReserves": "Gold Reserves"
   },
   "modals": {
     "search": {
@@ -552,6 +553,13 @@
       "coordinates": "Coordinates",
       "status": "Status",
       "noPlants": "No nuclear plants available"
+    },
+    "goldReserves": {
+      "infoTooltip": "Official gold holdings of countries (US$), fetched live from World Bank.",
+      "searchPlaceholder": "Search country...",
+      "country": "Country",
+      "reserves": "Reserves",
+      "noData": "No data available"
     },
     "economic": {
       "indicators": "Indicators",

@@ -52,6 +52,7 @@ const FULL_PANELS: Record<string, PanelConfig> = {
   climate: { name: 'Climate Anomalies', enabled: true, priority: 2 },
   'population-exposure': { name: 'Population Exposure', enabled: true, priority: 2 },
   'nuclear-plants': { name: 'Nuclear Power Plants', enabled: true, priority: 41 },
+  'gold-reserves': { name: 'Gold Reserves', enabled: true, priority: 42 },
 };
 
 const FULL_MAP_LAYERS: MapLayers = {

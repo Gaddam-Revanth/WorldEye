@@ -32,6 +32,7 @@ import {
   PopulationExposurePanel,
   InvestmentsPanel,
   NuclearPlantsPanel,
+  GoldReservesPanel,
   TradePolicyPanel,
   SupplyChainPanel,
   FreshWaterPanel,
@@ -547,6 +548,9 @@ export class PanelLayoutManager implements AppModule {
 
       const nuclearPlantsPanel = new NuclearPlantsPanel();
       this.ctx.panels['nuclear-plants'] = nuclearPlantsPanel;
+
+      const goldReservesPanel = new GoldReservesPanel();
+      this.ctx.panels['gold-reserves'] = goldReservesPanel;
     }
 
     if (SITE_VARIANT === 'finance') {

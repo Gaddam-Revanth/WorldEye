@@ -10,6 +10,7 @@ import { LAYER_PRESETS, LAYER_KEY_MAP } from '@/config/commands';
 import { calculateCII, TIER1_COUNTRIES } from '@/services/country-instability';
 import { CURATED_COUNTRIES } from '@/config/countries';
 import { INTEL_HOTSPOTS, CONFLICT_ZONES, MILITARY_BASES, UNDERSEA_CABLES, NUCLEAR_FACILITIES } from '@/config/geo';
+import { GOLD_RESERVES } from '@/config/gold';
 import { PIPELINES } from '@/config/pipelines';
 import { AI_DATA_CENTERS } from '@/config/ai-datacenters';
 import { GAMMA_IRRADIATORS } from '@/config/irradiators';
@@ -171,6 +172,13 @@ export class SearchManager implements AppModule {
         data: n,
       })));
 
+      this.ctx.searchModal.registerSource('gold', GOLD_RESERVES.map(g => ({
+        id: g.country,
+        title: g.country,
+        subtitle: `$${(g.value / 1e9).toFixed(1)}B`,
+        data: g,
+      })));
+
       this.ctx.searchModal.registerSource('irradiator', GAMMA_IRRADIATORS.map(g => ({
         id: g.id,
         title: `${g.city}, ${g.country}`,
@@ -296,6 +304,11 @@ export class SearchManager implements AppModule {
         // focus panel list as well if plant panel exists
         this.scrollToPanel('nuclear-plants');
         setTimeout(() => { this.ctx.map?.triggerNuclearClick(nuc.id); }, 300);
+        break;
+      }
+      case 'gold': {
+        // just scroll to gold panel
+        this.scrollToPanel('gold-reserves');
         break;
       }
       case 'irradiator': {

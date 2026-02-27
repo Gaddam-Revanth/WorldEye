@@ -27,11 +27,11 @@ export class NuclearPlantsPanel extends Panel {
     `).join('');
 
     const html = `
-      <div class="nuclear-panel-toolbar">
-        <input class="nuclear-search" placeholder="${t('components.nuclearPlants.searchPlaceholder')}" />
+      <div class="panel-toolbar">
+        <input class="panel-search" placeholder="${t('components.nuclearPlants.searchPlaceholder')}" />
       </div>
-      <div class="nuclear-table-wrap">
-        <table class="nuclear-table">
+      <div class="panel-table-wrap">
+        <table class="panel-table">
           <thead>
             <tr>
               <th>${t('components.nuclearPlants.name')}</th>
@@ -51,7 +51,7 @@ export class NuclearPlantsPanel extends Panel {
 
     this.content.addEventListener('input', (e) => {
       const target = e.target as HTMLInputElement;
-      if (target && target.classList.contains('nuclear-search')) {
+      if (target && target.classList.contains('panel-search')) {
         const q = target.value.toLowerCase();
         Array.from(this.content.querySelectorAll('.nuclear-plant-row')).forEach((r) => {
           const txt = r.textContent || '';

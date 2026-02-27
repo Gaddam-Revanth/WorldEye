@@ -4558,6 +4558,39 @@ body.playback-mode .status-dot {
   cursor: pointer;
 }
 
+/* Shared panel UI helpers */
+.panel-toolbar {
+  padding: 4px 0;
+  text-align: right;
+}
+.panel-search {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+.panel-table-wrap {
+  max-height: 300px;
+  overflow-y: auto;
+}
+.panel-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+.panel-table th,
+.panel-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-light);
+  text-align: left;
+}
+.panel-row:hover {
+  background: var(--bg-highlight);
+  cursor: pointer;
+}
+
 /* Gold Reserves Panel */
 .gold-panel-toolbar {
   padding: 4px 0;

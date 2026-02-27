@@ -44,11 +44,11 @@ export class GoldReservesPanel extends Panel {
       .join('');
 
     const html = `
-      <div class="gold-panel-toolbar">
-        <input class="gold-search" placeholder="${t('components.goldReserves.searchPlaceholder')}" />
+      <div class="panel-toolbar">
+        <input class="panel-search" placeholder="${t('components.goldReserves.searchPlaceholder')}" />
       </div>
-      <div class="gold-table-wrap">
-        <table class="gold-table">
+      <div class="panel-table-wrap">
+        <table class="panel-table">
           <thead>
             <tr>
               <th>${t('components.goldReserves.country')}</th>
@@ -66,7 +66,7 @@ export class GoldReservesPanel extends Panel {
 
     this.content.addEventListener('input', (e) => {
       const target = e.target as HTMLInputElement;
-      if (target && target.classList.contains('gold-search')) {
+      if (target && target.classList.contains('panel-search')) {
         const q = target.value.toLowerCase();
         Array.from(this.content.querySelectorAll('.gold-row')).forEach((r) => {
           const txt = r.textContent || '';

@@ -83,10 +83,33 @@ export async function listMarketQuotes(
 
     const quotes: MarketQuote[] = [];
 
-    // Use mock data if API key is not available (local development)
+    // If FINNHUB API key missing, skip Finnhub but still fetch Yahoo-only symbols.
     if (!apiKey) {
-      const mockQuotes = generateMockQuotes(symbols);
-      return { quotes: mockQuotes, finnhubSkipped: true, skipReason: 'Using mock data (FINNHUB_API_KEY not configured)' };
+      // Try to fetch Yahoo symbols via Yahoo even when FINNHUB_API_KEY is not configured
+      if (yahooSymbols.length > 0) {
+        const batch = await fetchYahooQuotesBatch(yahooSymbols);
+        for (const s of yahooSymbols) {
+          const yahoo = batch.get(s);
+          if (yahoo) {
+            quotes.push({
+              symbol: s,
+              name: s,
+              display: s,
+              price: yahoo.price,
+              change: yahoo.change,
+              sparkline: yahoo.sparkline,
+            });
+          }
+        }
+      }
+
+      // For symbols that would be fetched from Finnhub, fall back to mock data
+      if (finnhubSymbols.length > 0) {
+        const mockQuotes = generateMockQuotes(finnhubSymbols);
+        quotes.push(...mockQuotes);
+      }
+
+      return { quotes, finnhubSkipped: true, skipReason: 'FINNHUB_API_KEY not configured' };
     }
 
     // Fetch Finnhub quotes (only if API key is set)

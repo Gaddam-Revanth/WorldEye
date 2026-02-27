@@ -27,8 +27,16 @@ export async function fetchYahooQuotesBatch(
 
 // Yahoo-only symbols: indices and futures not on Finnhub free tier
 export const YAHOO_ONLY_SYMBOLS = new Set([
+  // indices & volatility
   '^GSPC', '^DJI', '^IXIC', '^VIX',
+  // precious & energy futures
   'GC=F', 'CL=F', 'NG=F', 'SI=F', 'HG=F',
+  // expanded commodity symbols
+  'BZ=F', 'UGA=F', 'AL=F', 'ZN=F', 'NI=F', 'SN=F',
+  'PL=F', 'PA=F', 'ZW=F', 'ZC=F', 'ZS=F', 'ZR=F',
+  'SB=F', 'CT=F', 'CC=F', 'KC=F',
+  // freight & FX indicators
+  '^BVSP', 'DXY=F',
 ]);
 
 // Known crypto IDs and their metadata

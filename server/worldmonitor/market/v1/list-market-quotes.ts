@@ -154,7 +154,10 @@ export async function listMarketQuotes(
       return memCached.data;
     }
 
-    if (quotes.length === 0) return null;
+    // Always return a ListMarketQuotesResponse (never `null`) to satisfy the
+    // cachedFetchJson type signature. If we have no quotes, return an empty
+    // response object instead of `null`.
+    if (quotes.length === 0) return { quotes: [] };
 
     return { quotes, finnhubSkipped: !apiKey, skipReason: !apiKey ? 'FINNHUB_API_KEY not configured' : '' };
   });

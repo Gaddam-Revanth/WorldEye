@@ -4558,11 +4558,6 @@ body.playback-mode .status-dot {
   cursor: pointer;
 }
 
-  50% {
-    opacity: 1;
-  }
-}
-
 /* Gamma Irradiators */
 .irradiator-marker {
   position: absolute;

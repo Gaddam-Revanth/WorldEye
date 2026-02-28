@@ -46,6 +46,7 @@ const FULL_PANELS: Record<string, PanelConfig> = {
   'macro-signals': { name: 'Market Radar', enabled: true, priority: 2 },
   'etf-flows': { name: 'BTC ETF Tracker', enabled: true, priority: 2 },
   stablecoins: { name: 'Stablecoins', enabled: true, priority: 2 },
+  'forex-market': { name: 'Forex Market', enabled: true, priority: 2 },
   'ucdp-events': { name: 'UCDP Conflict Events', enabled: true, priority: 2 },
   giving: { name: 'Global Giving', enabled: false, priority: 2 },
   displacement: { name: 'UNHCR Displacement', enabled: true, priority: 2 },
@@ -77,7 +78,9 @@ const FULL_MAP_LAYERS: MapLayers = {
   natural: true,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   // Data source layers
   ucdpEvents: false,
   displacement: false,
@@ -125,7 +128,9 @@ const FULL_MOBILE_MAP_LAYERS: MapLayers = {
   natural: true,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   // Data source layers
   ucdpEvents: false,
   displacement: false,
@@ -213,7 +218,9 @@ const TECH_MAP_LAYERS: MapLayers = {
   natural: true,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   // Data source layers
   ucdpEvents: false,
   displacement: false,
@@ -261,7 +268,9 @@ const TECH_MOBILE_MAP_LAYERS: MapLayers = {
   natural: true,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   // Data source layers
   ucdpEvents: false,
   displacement: false,
@@ -347,7 +356,9 @@ const FINANCE_MAP_LAYERS: MapLayers = {
   natural: true,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   // Data source layers
   ucdpEvents: false,
   displacement: false,
@@ -395,7 +406,9 @@ const FINANCE_MOBILE_MAP_LAYERS: MapLayers = {
   natural: true,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   // Data source layers
   ucdpEvents: false,
   displacement: false,
@@ -459,7 +472,9 @@ const HAPPY_MAP_LAYERS: MapLayers = {
   natural: false,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   // Data source layers
   ucdpEvents: false,
   displacement: false,
@@ -507,7 +522,9 @@ const HAPPY_MOBILE_MAP_LAYERS: MapLayers = {
   natural: false,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   // Data source layers
   ucdpEvents: false,
   displacement: false,
@@ -581,7 +598,7 @@ export const PANEL_CATEGORY_MAP: Record<string, { labelKey: string; panelKeys: s
   },
   marketsFinance: {
     labelKey: 'header.panelCatMarketsFinance',
-    panelKeys: ['commodities', 'markets', 'economic', 'trade-policy', 'supply-chain', 'finance', 'polymarket', 'macro-signals', 'etf-flows', 'stablecoins', 'crypto', 'heatmap'],
+    panelKeys: ['commodities', 'markets', 'economic', 'trade-policy', 'supply-chain', 'finance', 'polymarket', 'macro-signals', 'etf-flows', 'stablecoins', 'crypto', 'heatmap', 'forex-market'],
     variants: ['full'],
   },
   topical: {

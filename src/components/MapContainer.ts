@@ -600,6 +600,13 @@ export class MapContainer {
     }
   }
 
+  public setSatelliteRiskPoints(points: Array<{ lat: number; lon: number; risk: number; type?: string }>): void {
+    if (this.useDeckGL) {
+      this.deckGLMap?.setSatelliteRiskPoints(points);
+    }
+    // SVG map does not support satellite layer
+  }
+
   // Utility methods
   public isDeckGLMode(): boolean {
     return this.useDeckGL;

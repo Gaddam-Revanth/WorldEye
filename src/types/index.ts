@@ -506,6 +506,7 @@ export interface MapLayers {
   spaceports: boolean;
   minerals: boolean;
   fires: boolean;
+  satellite: boolean;
   // Data source layers
   ucdpEvents: boolean;
   displacement: boolean;

@@ -157,7 +157,9 @@ const allLayersEnabled: MapLayers = {
   natural: true,
   spaceports: true,
   minerals: true,
+  
   fires: true,
+  satellite: false,
   ucdpEvents: true,
   displacement: true,
   climate: true,
@@ -201,7 +203,9 @@ const allLayersDisabled: MapLayers = {
   natural: false,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   ucdpEvents: false,
   displacement: false,
   climate: false,

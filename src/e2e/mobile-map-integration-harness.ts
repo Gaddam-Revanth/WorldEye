@@ -106,7 +106,9 @@ const layers = {
   natural: false,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   ucdpEvents: false,
   displacement: false,
   climate: false,

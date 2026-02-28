@@ -223,7 +223,9 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   natural: true,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   ucdpEvents: false,
   displacement: false,
   climate: false,
@@ -271,7 +273,9 @@ export const MOBILE_DEFAULT_MAP_LAYERS: MapLayers = {
   natural: true,
   spaceports: false,
   minerals: false,
+  
   fires: false,
+  satellite: false,
   ucdpEvents: false,
   displacement: false,
   climate: false,

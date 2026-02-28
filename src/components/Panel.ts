@@ -31,14 +31,14 @@ function savePanelSpan(panelId: string, span: number): void {
 }
 
 function heightToSpan(height: number): number {
-  // Much lower thresholds for responsive resizing
-  // Start at 200px, so:
-  // - 50px drag → span 2 (250px)
-  // - 150px drag → span 3 (350px)
-  // - 300px drag → span 4 (500px)
-  if (height >= 500) return 4;
-  if (height >= 350) return 3;
-  if (height >= 250) return 2;
+  // Thresholds match the CSS grid-auto-rows: minmax(320px, 520px) and span classes
+  // - Default panel: 320–520px → span 1
+  // - span-2: 660px+
+  // - span-3: 1000px+
+  // - span-4: 1340px+
+  if (height >= 960) return 4;
+  if (height >= 640) return 3;
+  if (height >= 420) return 2;
   return 1;
 }
 

@@ -60,6 +60,7 @@ import {
 } from '@/services';
 import { mlWorker } from '@/services/ml-worker';
 import { clusterNewsHybrid } from '@/services/clustering';
+import { augmentEvents } from '@/services/intelligence-augmentation';
 import { ingestProtests, ingestFlights, ingestVessels, ingestEarthquakes, detectGeoConvergence, geoConvergenceToSignal } from '@/services/geo-convergence';
 import { signalAggregator } from '@/services/signal-aggregator';
 import { updateAndCheck } from '@/services/temporal-baseline';
@@ -131,16 +132,16 @@ export class DataLoaderManager implements AppModule {
     this.applyTimeRangeFilterToNewsPanels();
   }, 120);
 
-  public updateSearchIndex: () => void = () => {};
+  public updateSearchIndex: () => void = () => { };
 
   constructor(ctx: AppContext, callbacks: DataLoaderCallbacks) {
     this.ctx = ctx;
     this.callbacks = callbacks;
   }
 
-  init(): void {}
+  init(): void { }
 
-  destroy(): void {}
+  destroy(): void { }
 
   private shouldShowIntelligenceNotifications(): boolean {
     return !this.ctx.isMobile && !!this.ctx.findingsBadge?.isPopupEnabled();
@@ -613,12 +614,26 @@ export class DataLoaderManager implements AppModule {
         ? await clusterNewsHybrid(this.ctx.allNews)
         : await analysisWorker.clusterNews(this.ctx.allNews);
 
-      if (this.ctx.latestClusters.length > 0) {
+      // Augment the raw clustered events with intelligence (anomalies, alerts, satellite)
+      this.ctx.latestEnrichedClusters = await augmentEvents(this.ctx.latestClusters);
+
+      if (this.ctx.latestEnrichedClusters.length > 0) {
         const insightsPanel = this.ctx.panels['insights'] as InsightsPanel | undefined;
-        insightsPanel?.updateInsights(this.ctx.latestClusters);
+        // The Insights panel can accept raw or enriched events — it just renders the cluster
+        insightsPanel?.updateInsights(this.ctx.latestEnrichedClusters as any);
+
+        const alertRulesPanel = this.ctx.panels['alert-rules'] as any;
+        if (alertRulesPanel?.setData) {
+          alertRulesPanel.setData(this.ctx.latestEnrichedClusters);
+        }
+
+        const anomalyPanel = this.ctx.panels['anomaly-detection'] as any;
+        if (anomalyPanel?.setData) {
+          anomalyPanel.setData(this.ctx.latestEnrichedClusters);
+        }
       }
 
-      const geoLocated = this.ctx.latestClusters
+      const geoLocated = this.ctx.latestEnrichedClusters
         .filter((c): c is typeof c & { lat: number; lon: number } => c.lat != null && c.lon != null)
         .map(c => ({
           lat: c.lat,
@@ -629,6 +644,49 @@ export class DataLoaderManager implements AppModule {
         }));
       if (geoLocated.length > 0) {
         this.ctx.map?.setNewsLocations(geoLocated);
+      }
+
+      // Satellite overlay: aggregate risk points from augmented clusters
+      try {
+        const satPoints: Array<{ lat: number; lon: number; risk: number; type?: string }> = [];
+        for (const c of this.ctx.latestEnrichedClusters) {
+          const aug = (c as any)._augmented;
+          if (!aug) continue;
+          if (aug.satelliteContext) {
+            const ctx = aug.satelliteContext;
+            const overall = ctx?.riskAssessment?.overallRisk;
+            if (typeof overall === 'number' && c.lat != null && c.lon != null) {
+              satPoints.push({ lat: c.lat as number, lon: c.lon as number, risk: Math.max(0, Math.min(1, overall)), type: 'overall' });
+            }
+            const anomalies = ctx?.nearbyAnomalies ?? [];
+            for (const a of anomalies) {
+              const type = a.type as string | undefined;
+              const val = (a as any).value as number | undefined;
+              let risk = 0.3;
+              if (type === 'thermal_anomalies') {
+                risk = Math.min(1, Math.max(0, (val ?? 0) / 500));
+              } else if (type === 'flood_risk') {
+                risk = Math.min(1, Math.max(0, (val ?? 0) / 100));
+              } else if (type === 'crop_health') {
+                risk = Math.min(1, Math.max(0, 1 - (val ?? 0)));
+              } else if (type === 'air_quality') {
+                risk = Math.min(1, Math.max(0, (val ?? 0) / 300));
+              }
+              if (typeof a.lat === 'number' && typeof a.lon === 'number') {
+                satPoints.push({ lat: a.lat, lon: a.lon, risk, type });
+              }
+            }
+          }
+        }
+        if (satPoints.length > 0) {
+          this.ctx.map?.setSatelliteRiskPoints(satPoints);
+          this.ctx.map?.setLayerReady('satellite', true);
+        } else {
+          this.ctx.map?.setLayerReady('satellite', false);
+        }
+      } catch (e) {
+        console.warn('[App] Satellite overlay aggregation failed:', e);
+        this.ctx.map?.setLayerReady('satellite', false);
       }
     } catch (error) {
       console.error('[App] Clustering failed, clusters unchanged:', error);
@@ -943,7 +1001,7 @@ export class DataLoaderManager implements AppModule {
         };
         fetchUSNIFleetReport().then((report) => {
           if (report) this.ctx.intelligenceCache.usniFleet = report;
-        }).catch(() => {});
+        }).catch(() => { });
         ingestFlights(flightData.flights);
         ingestVessels(vesselData.vessels);
         ingestMilitaryForCII(flightData.flights, vesselData.vessels);
@@ -1334,7 +1392,7 @@ export class DataLoaderManager implements AppModule {
       };
       fetchUSNIFleetReport().then((report) => {
         if (report) this.ctx.intelligenceCache.usniFleet = report;
-      }).catch(() => {});
+      }).catch(() => { });
       this.ctx.map?.setMilitaryFlights(flightData.flights, flightData.clusters);
       this.ctx.map?.setMilitaryVessels(vesselData.vessels, vesselData.clusters);
       ingestFlights(flightData.flights);
@@ -1819,7 +1877,7 @@ export class DataLoaderManager implements AppModule {
     setPersistentCache(
       DataLoaderManager.HAPPY_ITEMS_CACHE_KEY,
       this.ctx.happyAllItems.map(item => ({ ...item, pubDate: item.pubDate.getTime() }))
-    ).catch(() => {});
+    ).catch(() => { });
   }
 
   private async loadPositiveEvents(): Promise<void> {

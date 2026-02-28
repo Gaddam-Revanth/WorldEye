@@ -221,3 +221,214 @@
 .giving-receiver-list li:last-child { border-bottom: none; }
 .giving-inst-content { }
 .giving-inst-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+
+/* ----------------------------------------------------------
+   Forex Market Panel
+   ---------------------------------------------------------- */
+.forex-panel-wrap {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  font-size: 12px;
+}
+
+/* Toolbar */
+.forex-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.forex-tabs {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.forex-tab {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+  padding: 3px 11px;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: all 0.15s;
+  font-family: inherit;
+  letter-spacing: 0.2px;
+}
+.forex-tab:hover {
+  border-color: var(--text-faint);
+  color: var(--text-secondary);
+  background: var(--surface-hover);
+}
+.forex-tab.active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.forex-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-faint);
+  flex-wrap: wrap;
+}
+
+.forex-refreshing {
+  color: var(--accent);
+  animation: fx-pulse 1s ease-in-out infinite;
+}
+
+.forex-updated {
+  color: var(--text-muted);
+}
+
+.forex-source {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* Table */
+.forex-table-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.forex-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.forex-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface);
+  text-align: left;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 5px 9px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.fx-col-pair  { width: 90px; }
+.fx-col-desc  { width: auto; }
+.fx-col-price { width: 90px; text-align: right; }
+.fx-col-chg   { width: 80px; text-align: right; }
+
+.forex-table thead th.fx-col-price,
+.forex-table thead th.fx-col-chg {
+  text-align: right;
+}
+
+/* Rows */
+.forex-row {
+  transition: background 0.1s;
+}
+.forex-row:hover {
+  background: var(--surface-hover);
+}
+.forex-row td {
+  padding: 5px 9px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+.forex-row-pending td {
+  color: var(--text-faint);
+}
+
+/* Flash animation on price update */
+@keyframes fx-flash-row {
+  0%   { background-color: color-mix(in srgb, var(--accent) 18%, transparent); }
+  100% { background-color: transparent; }
+}
+.forex-row.fx-flash {
+  animation: fx-flash-row 1.2s ease-out forwards;
+}
+
+@keyframes fx-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Pair symbol */
+.fx-symbol {
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--text);
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+/* Description */
+.fx-desc {
+  color: var(--text-dim);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+/* Price */
+.fx-price {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.fx-price-dash {
+  text-align: right;
+  color: var(--text-faint);
+  font-family: var(--font-mono, monospace);
+}
+
+/* Change badges */
+.fx-change {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  display: inline-block;
+}
+.fx-change.fx-up     { color: var(--semantic-positive, #44ff88); }
+.fx-change.fx-down   { color: var(--semantic-critical, #ff4444); }
+.fx-change.fx-neutral { color: var(--text-faint); }
+
+/* Footer */
+.forex-footer {
+  padding: 6px 10px 4px;
+  border-top: 1px solid var(--border);
+  font-size: 9px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+/* Light theme overrides */
+[data-theme="light"] .forex-tab.active {
+  background: color-mix(in srgb, var(--accent) 10%, white);
+}
+[data-theme="light"] .fx-symbol {
+  color: var(--text);
+}
+

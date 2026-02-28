@@ -44,3 +44,6 @@ export * from './SupplyChainPanel';
 export * from './FreshWaterPanel';
 export * from './NuclearPlantsPanel';
 export * from './GoldReservesPanel';
+export * from './ForexMarketPanel';
+export * from './AlertRulesPanel';
+export * from './AnomalyPanel';

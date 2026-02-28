@@ -2,6 +2,7 @@ import type { NewsItem, Monitor, PanelConfig, MapLayers, InternetOutage, SocialU
 import type { MapContainer, Panel, NewsPanel, SignalModal, StatusPanel, SearchModal } from '@/components';
 import type { IntelligenceGapBadge } from '@/components';
 import type { MarketData, ClusteredEvent } from '@/types';
+import type { EnrichedEvent } from '@/services/intelligence-augmentation';
 import type { PredictionMarket } from '@/services/prediction';
 import type { TimeRange } from '@/components';
 import type { Earthquake } from '@/services/earthquakes';
@@ -64,6 +65,7 @@ export interface AppContext {
   latestMarkets: MarketData[];
   latestPredictions: PredictionMarket[];
   latestClusters: ClusteredEvent[];
+  latestEnrichedClusters: EnrichedEvent[];
   intelligenceCache: IntelligenceCache;
   cyberThreatsCache: CyberThreat[] | null;
 

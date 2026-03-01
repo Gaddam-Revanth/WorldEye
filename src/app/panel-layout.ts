@@ -1,5 +1,4 @@
 import type { AppContext, AppModule } from '@/app/app-context';
-import type { RelatedAsset } from '@/types';
 import type { TheaterPostureSummary } from '@/services/military-surge';
 import {
   MapContainer,
@@ -113,48 +112,7 @@ export class PanelLayoutManager implements AppModule {
     this.ctx.container.innerHTML = `
       <div class="header">
         <div class="header-left">
-          <div class="variant-switcher">${(() => {
-        const local = this.ctx.isDesktopApp || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-        const vHref = (v: string, prod: string) => local || SITE_VARIANT === v ? '#' : prod;
-        const vTarget = (v: string) => !local && SITE_VARIANT !== v ? 'target="_blank" rel="noopener"' : '';
-        return `
-            <a href="${vHref('full', 'https://worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'full' ? 'active' : ''}"
-               data-variant="full"
-               ${vTarget('full')}
-               title="${t('header.world')}${SITE_VARIANT === 'full' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">🌍</span>
-              <span class="variant-label">${t('header.world')}</span>
-            </a>
-            <span class="variant-divider"></span>
-            <a href="${vHref('tech', 'https://tech.worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'tech' ? 'active' : ''}"
-               data-variant="tech"
-               ${vTarget('tech')}
-               title="${t('header.tech')}${SITE_VARIANT === 'tech' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">💻</span>
-              <span class="variant-label">${t('header.tech')}</span>
-            </a>
-            <span class="variant-divider"></span>
-            <a href="${vHref('finance', 'https://finance.worldmonitor.app')}"
-               class="variant-option ${SITE_VARIANT === 'finance' ? 'active' : ''}"
-               data-variant="finance"
-               ${vTarget('finance')}
-               title="${t('header.finance')}${SITE_VARIANT === 'finance' ? ` ${t('common.currentVariant')}` : ''}">
-              <span class="variant-icon">📈</span>
-              <span class="variant-label">${t('header.finance')}</span>
-            </a>
-            ${SITE_VARIANT === 'happy' ? `<span class="variant-divider"></span>
-            <a href="${vHref('happy', 'https://happy.worldmonitor.app')}"
-               class="variant-option active"
-               data-variant="happy"
-               ${vTarget('happy')}
-               title="Good News ${t('common.currentVariant')}">
-              <span class="variant-icon">☀️</span>
-              <span class="variant-label">Good News</span>
-            </a>` : ''}`;
-      })()}</div>
-          <span class="logo">${(import.meta.env.VITE_VARIANT === 'worldeye' || (typeof document !== 'undefined' && (document.documentElement?.dataset as any)?.variant === 'worldeye')) ? 'EYE' : 'MONITOR'}</span><span class="version">v${__APP_VERSION__}</span>${BETA_MODE ? '<span class="beta-badge">BETA</span>' : ''}
+          <span class="logo">EYE</span><span class="version">v${__APP_VERSION__}</span>${BETA_MODE ? '<span class="beta-badge">BETA</span>' : ''}
           <a href="https://x.com/eliehabib" target="_blank" rel="noopener" class="credit-link">
             <svg class="x-logo" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
             <span class="credit-text">@eliehabib</span>
@@ -312,7 +270,8 @@ export class PanelLayoutManager implements AppModule {
     this.ctx.map.initEscalationGetters();
     this.ctx.currentTimeRange = this.ctx.map.getTimeRange();
 
-    const politicsPanel = new NewsPanel('politics', t('panels.politics'));
+    // Politics/World News: un-clustered by user request to show "multiple WorldNEWS from across the globe"
+    const politicsPanel = new NewsPanel('politics', t('panels.politics'), { clustered: false });
     this.attachRelatedAssetHandlers(politicsPanel);
     this.ctx.newsPanels['politics'] = politicsPanel;
     this.ctx.panels['politics'] = politicsPanel;
@@ -457,13 +416,11 @@ export class PanelLayoutManager implements AppModule {
     const freshWaterPanel = new FreshWaterPanel();
     this.ctx.panels['fresh-water'] = freshWaterPanel;
 
-    if (SITE_VARIANT === 'full' || SITE_VARIANT === 'finance') {
-      const tradePolicyPanel = new TradePolicyPanel();
-      this.ctx.panels['trade-policy'] = tradePolicyPanel;
+    const tradePolicyPanel = new TradePolicyPanel();
+    this.ctx.panels['trade-policy'] = tradePolicyPanel;
 
-      const supplyChainPanel = new SupplyChainPanel();
-      this.ctx.panels['supply-chain'] = supplyChainPanel;
-    }
+    const supplyChainPanel = new SupplyChainPanel();
+    this.ctx.panels['supply-chain'] = supplyChainPanel;
 
     const africaPanel = new NewsPanel('africa', t('panels.africa'));
     this.attachRelatedAssetHandlers(africaPanel);
@@ -498,69 +455,65 @@ export class PanelLayoutManager implements AppModule {
       this.ctx.panels[panelKey] = panel;
     }
 
-    if (SITE_VARIANT === 'full') {
-      const gdeltIntelPanel = new GdeltIntelPanel();
-      this.ctx.panels['gdelt-intel'] = gdeltIntelPanel;
+    const gdeltIntelPanel = new GdeltIntelPanel();
+    this.ctx.panels['gdelt-intel'] = gdeltIntelPanel;
 
-      const ciiPanel = new CIIPanel();
-      ciiPanel.setShareStoryHandler((code, name) => {
-        this.callbacks.openCountryStory(code, name);
-      });
-      this.ctx.panels['cii'] = ciiPanel;
+    const ciiPanel = new CIIPanel();
+    ciiPanel.setShareStoryHandler((code, name) => {
+      this.callbacks.openCountryStory(code, name);
+    });
+    this.ctx.panels['cii'] = ciiPanel;
 
-      const cascadePanel = new CascadePanel();
-      this.ctx.panels['cascade'] = cascadePanel;
+    const cascadePanel = new CascadePanel();
+    this.ctx.panels['cascade'] = cascadePanel;
 
-      const satelliteFiresPanel = new SatelliteFiresPanel();
-      this.ctx.panels['satellite-fires'] = satelliteFiresPanel;
+    const satelliteFiresPanel = new SatelliteFiresPanel();
+    this.ctx.panels['satellite-fires'] = satelliteFiresPanel;
 
-      const strategicRiskPanel = new StrategicRiskPanel();
-      strategicRiskPanel.setLocationClickHandler((lat, lon) => {
-        this.ctx.map?.setCenter(lat, lon, 4);
-      });
-      this.ctx.panels['strategic-risk'] = strategicRiskPanel;
+    const strategicRiskPanel = new StrategicRiskPanel();
+    strategicRiskPanel.setLocationClickHandler((lat, lon) => {
+      this.ctx.map?.setCenter(lat, lon, 4);
+    });
+    this.ctx.panels['strategic-risk'] = strategicRiskPanel;
 
-      const strategicPosturePanel = new StrategicPosturePanel();
-      strategicPosturePanel.setLocationClickHandler((lat, lon) => {
-        console.log('[App] StrategicPosture handler called:', { lat, lon, hasMap: !!this.ctx.map });
-        this.ctx.map?.setCenter(lat, lon, 4);
-      });
-      this.ctx.panels['strategic-posture'] = strategicPosturePanel;
+    const strategicPosturePanel = new StrategicPosturePanel();
+    strategicPosturePanel.setLocationClickHandler((lat, lon) => {
+      console.log('[App] StrategicPosture handler called:', { lat, lon, hasMap: !!this.ctx.map });
+      this.ctx.map?.setCenter(lat, lon, 4);
+    });
+    this.ctx.panels['strategic-posture'] = strategicPosturePanel;
 
-      const ucdpEventsPanel = new UcdpEventsPanel();
-      ucdpEventsPanel.setEventClickHandler((lat, lon) => {
-        this.ctx.map?.setCenter(lat, lon, 5);
-      });
-      this.ctx.panels['ucdp-events'] = ucdpEventsPanel;
+    const ucdpEventsPanel = new UcdpEventsPanel();
+    ucdpEventsPanel.setEventClickHandler((lat, lon) => {
+      this.ctx.map?.setCenter(lat, lon, 5);
+    });
+    this.ctx.panels['ucdp-events'] = ucdpEventsPanel;
 
-      const displacementPanel = new DisplacementPanel();
-      displacementPanel.setCountryClickHandler((lat, lon) => {
-        this.ctx.map?.setCenter(lat, lon, 4);
-      });
-      this.ctx.panels['displacement'] = displacementPanel;
+    const displacementPanel = new DisplacementPanel();
+    displacementPanel.setCountryClickHandler((lat, lon) => {
+      this.ctx.map?.setCenter(lat, lon, 4);
+    });
+    this.ctx.panels['displacement'] = displacementPanel;
 
-      const climatePanel = new ClimateAnomalyPanel();
-      climatePanel.setZoneClickHandler((lat, lon) => {
-        this.ctx.map?.setCenter(lat, lon, 4);
-      });
-      this.ctx.panels['climate'] = climatePanel;
+    const climatePanel = new ClimateAnomalyPanel();
+    climatePanel.setZoneClickHandler((lat, lon) => {
+      this.ctx.map?.setCenter(lat, lon, 4);
+    });
+    this.ctx.panels['climate'] = climatePanel;
 
-      const populationExposurePanel = new PopulationExposurePanel();
-      this.ctx.panels['population-exposure'] = populationExposurePanel;
+    const populationExposurePanel = new PopulationExposurePanel();
+    this.ctx.panels['population-exposure'] = populationExposurePanel;
 
-      const nuclearPlantsPanel = new NuclearPlantsPanel();
-      this.ctx.panels['nuclear-plants'] = nuclearPlantsPanel;
+    const nuclearPlantsPanel = new NuclearPlantsPanel();
+    this.ctx.panels['nuclear-plants'] = nuclearPlantsPanel;
 
-      const goldReservesPanel = new GoldReservesPanel();
-      this.ctx.panels['gold-reserves'] = goldReservesPanel;
-    }
+    const goldReservesPanel = new GoldReservesPanel();
+    this.ctx.panels['gold-reserves'] = goldReservesPanel;
 
-    if (SITE_VARIANT === 'finance') {
-      const investmentsPanel = new InvestmentsPanel((inv) => {
-        focusInvestmentOnMap(this.ctx.map, this.ctx.mapLayers, inv.lat, inv.lon);
-      });
-      this.ctx.panels['gcc-investments'] = investmentsPanel;
-    }
+    const investmentsPanel = new InvestmentsPanel((inv) => {
+      focusInvestmentOnMap(this.ctx.map, this.ctx.mapLayers, inv.lat, inv.lon);
+    });
+    this.ctx.panels['gcc-investments'] = investmentsPanel;
 
     if (SITE_VARIANT !== 'happy') {
       const liveNewsPanel = new LiveNewsPanel();
@@ -778,48 +731,7 @@ export class PanelLayoutManager implements AppModule {
   }
 
   private attachRelatedAssetHandlers(panel: NewsPanel): void {
-    panel.setRelatedAssetHandlers({
-      onRelatedAssetClick: (asset) => this.handleRelatedAssetClick(asset),
-      onRelatedAssetsFocus: (assets) => this.ctx.map?.highlightAssets(assets),
-      onRelatedAssetsClear: () => this.ctx.map?.highlightAssets(null),
-    });
-  }
-
-  private handleRelatedAssetClick(asset: RelatedAsset): void {
-    if (!this.ctx.map) return;
-
-    switch (asset.type) {
-      case 'pipeline':
-        this.ctx.map.enableLayer('pipelines');
-        this.ctx.mapLayers.pipelines = true;
-        saveToStorage(STORAGE_KEYS.mapLayers, this.ctx.mapLayers);
-        this.ctx.map.triggerPipelineClick(asset.id);
-        break;
-      case 'cable':
-        this.ctx.map.enableLayer('cables');
-        this.ctx.mapLayers.cables = true;
-        saveToStorage(STORAGE_KEYS.mapLayers, this.ctx.mapLayers);
-        this.ctx.map.triggerCableClick(asset.id);
-        break;
-      case 'datacenter':
-        this.ctx.map.enableLayer('datacenters');
-        this.ctx.mapLayers.datacenters = true;
-        saveToStorage(STORAGE_KEYS.mapLayers, this.ctx.mapLayers);
-        this.ctx.map.triggerDatacenterClick(asset.id);
-        break;
-      case 'base':
-        this.ctx.map.enableLayer('bases');
-        this.ctx.mapLayers.bases = true;
-        saveToStorage(STORAGE_KEYS.mapLayers, this.ctx.mapLayers);
-        this.ctx.map.triggerBaseClick(asset.id);
-        break;
-      case 'nuclear':
-        this.ctx.map.enableLayer('nuclear');
-        this.ctx.mapLayers.nuclear = true;
-        saveToStorage(STORAGE_KEYS.mapLayers, this.ctx.mapLayers);
-        this.ctx.map.triggerNuclearClick(asset.id);
-        break;
-    }
+    panel.setRelatedAssetHandlers();
   }
 
   private makeDraggable(el: HTMLElement, key: string): void {

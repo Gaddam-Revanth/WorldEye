@@ -195,7 +195,7 @@ export const DEFAULT_MAP_LAYERS: MapLayers = {
   minerals: false,
   
   fires: false,
-  satellite: false,
+  satellite: true,
   ucdpEvents: false,
   displacement: false,
   climate: false,

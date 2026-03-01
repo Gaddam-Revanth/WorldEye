@@ -6,7 +6,7 @@
 import { initAlertRules, evaluateEventAgainstRules, recordAlertTrigger } from './alert-rules';
 import { initDeduplication, deduplicateEvents, getDeduplicationStats } from './event-deduplication';
 import { initSatelliteService, getSatelliteContext } from './satellite-integration';
-import { initAnomalyDetection, analyzeEventAnomalies, predictEventEscalation } from './anomaly-detection';
+import { initAnomalyDetection, analyzeEventAnomalies, predictEventEscalation, type EventAnomalies } from './anomaly-detection';
 import type { ClusteredEvent } from '@/types';
 
 export interface EnrichedEvent extends ClusteredEvent {
@@ -21,7 +21,7 @@ export interface EnrichedEvent extends ClusteredEvent {
       mergedFrom: number;
     };
     satelliteContext?: any; // SatelliteContext type
-    anomalies?: any; // EventAnomalies type
+    anomalies: EventAnomalies;
     escalationPrediction?: {
       probability: number;
       indicators: string[];
@@ -79,6 +79,15 @@ export async function augmentEvents(events: ClusteredEvent[]): Promise<EnrichedE
       _augmented: {
         triggeredAlerts: [],
         deduplicationInfo: { isDuplicate: false, mergedFrom: 0 },
+        anomalies: {
+          eventId: e.id,
+          timestamp: e.firstSeen,
+          anomalies: [],
+          overallAnomalyScore: 0,
+          isAnomalous: false,
+          riskLevel: 'low',
+          interpretation: 'Augmentation failed',
+        },
       },
     }));
   }
@@ -108,10 +117,19 @@ async function augmentSingleEvent(event: ClusteredEvent, allEvents: ClusteredEve
   }
 
   // Get anomalies
-  let anomalies;
+  let anomalies: EventAnomalies = {
+    eventId: event.id,
+    timestamp: event.firstSeen,
+    anomalies: [],
+    overallAnomalyScore: 0,
+    isAnomalous: false,
+    riskLevel: 'low',
+    interpretation: 'Anomaly detection skipped',
+  };
   let escalationPrediction;
   try {
-    anomalies = await analyzeEventAnomalies(event, recentEvents);
+    const res = await analyzeEventAnomalies(event, recentEvents);
+    if (res) anomalies = res;
     escalationPrediction = predictEventEscalation(event);
   } catch (err) {
     console.warn('[IntelligenceAugmentation] Failed to analyze anomalies', err);

@@ -3,6 +3,10 @@
     "title": "WorldEye",
     "description": "Global Situation with AI Insights"
   },
+  "common": {
+    "syncNow": "Sync Now",
+    "syncing": "Syncing..."
+  },
   "countryBrief": {
     "identifying": "Identifying country...",
     "locating": "Locating region...",
@@ -1222,6 +1226,9 @@
         "low": "LOW"
       },
       "insights": {
+        "sectionDataSync": "Data Sync",
+        "forceSyncLabel": "Force Live Sync",
+        "forceSyncDesc": "Clear all caches and re-fetch fresh data from all sources immediately.",
         "criticalDestabilization": "Critical destabilization - immediate attention",
         "significantShift": "Significant shift - monitor closely",
         "developingSituation": "Developing situation - track for escalation",

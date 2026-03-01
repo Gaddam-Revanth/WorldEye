@@ -7,6 +7,8 @@ type Tab = 'live' | 'escalation' | 'baselines';
 export class AnomalyPanel extends Panel {
   private currentTab: Tab = 'live';
   private events: EnrichedEvent[] = [];
+  private typeFilter = 'all';
+  private riskFilter = 'all';
 
   constructor() {
     super({ id: 'anomaly-detection', title: '🔮 Anomaly Detection', showCount: false });
@@ -50,23 +52,60 @@ export class AnomalyPanel extends Panel {
   }
 
   private renderLiveAnomalies(): string {
-    const anomalousEvents = this.events.filter(e => e._augmented?.anomalies.isAnomalous);
+    let anomalousEvents = this.events.filter(e => e._augmented?.anomalies.isAnomalous);
+
+    // Apply filters
+    if (this.typeFilter !== 'all') {
+      anomalousEvents = anomalousEvents.filter(e => 
+        e._augmented.anomalies.anomalies.some(a => a.type === this.typeFilter)
+      );
+    }
+    if (this.riskFilter !== 'all') {
+      anomalousEvents = anomalousEvents.filter(e => {
+        const score = e._augmented.anomalies.overallAnomalyScore;
+        if (this.riskFilter === 'critical') return score > 0.8;
+        if (this.riskFilter === 'high') return score > 0.6;
+        if (this.riskFilter === 'medium') return score > 0.4;
+        return true;
+      });
+    }
+
+    const filterHtml = `
+      <div class="an-filters">
+        <select class="an-filter-select" id="an-f-type">
+          <option value="all" ${this.typeFilter === 'all' ? 'selected' : ''}>All Types</option>
+          <option value="velocity_spike" ${this.typeFilter === 'velocity_spike' ? 'selected' : ''}>Velocity Spike</option>
+          <option value="geographic_convergence" ${this.typeFilter === 'geographic_convergence' ? 'selected' : ''}>Convergence</option>
+          <option value="threat_escalation" ${this.typeFilter === 'threat_escalation' ? 'selected' : ''}>Escalation</option>
+          <option value="sentiment_shift" ${this.typeFilter === 'sentiment_shift' ? 'selected' : ''}>Sentiment Shift</option>
+        </select>
+        <select class="an-filter-select" id="an-f-risk">
+          <option value="all" ${this.riskFilter === 'all' ? 'selected' : ''}>All Risks</option>
+          <option value="critical" ${this.riskFilter === 'critical' ? 'selected' : ''}>Critical Only</option>
+          <option value="high" ${this.riskFilter === 'high' ? 'selected' : ''}>High+</option>
+          <option value="medium" ${this.riskFilter === 'medium' ? 'selected' : ''}>Medium+</option>
+        </select>
+      </div>
+    `;
 
     if (anomalousEvents.length === 0) {
-      return '<div class="an-empty">No anomalies detected yet — baselines are being established.</div>';
+      return `
+        ${filterHtml}
+        <div class="an-empty">No anomalies detected yet — baselines are being established.</div>
+      `;
     }
 
     const rows = anomalousEvents.map(e => {
       const a = e._augmented!.anomalies;
-      const scorePct = Math.min(100, Math.round(a.score * 100));
+      const scorePct = Math.min(100, Math.round(a.overallAnomalyScore * 100));
       let riskStr = 'Low';
       let riskClass = 'low';
 
-      if (a.score > 0.8) { riskStr = 'Critical'; riskClass = 'critical'; }
-      else if (a.score > 0.6) { riskStr = 'High'; riskClass = 'high'; }
-      else if (a.score > 0.4) { riskStr = 'Medium'; riskClass = 'medium'; }
+      if (a.overallAnomalyScore > 0.8) { riskStr = 'Critical'; riskClass = 'critical'; }
+      else if (a.overallAnomalyScore > 0.6) { riskStr = 'High'; riskClass = 'high'; }
+      else if (a.overallAnomalyScore > 0.4) { riskStr = 'Medium'; riskClass = 'medium'; }
 
-      const pills = a.types.map((t: string) => `<span class="an-pill">${t}</span>`).join('');
+      const pills = a.anomalies.map(score => `<span class="an-pill">${score.type} (${Math.round(score.score * 100)}%)</span>`).join('');
 
       return `
         <div class="an-card">
@@ -78,13 +117,16 @@ export class AnomalyPanel extends Panel {
             <div class="an-score-fill ${riskClass}" style="width: ${scorePct}%"></div>
           </div>
           <div class="an-card-meta">
-            Score: ${scorePct}% · ${pills}
+            ${pills}
           </div>
         </div>
       `;
     }).join('');
 
-    return `<div class="an-list">${rows}</div>`;
+    return `
+      ${filterHtml}
+      <div class="an-list">${rows}</div>
+    `;
   }
 
   private renderEscalationRadar(): string {
@@ -144,5 +186,21 @@ export class AnomalyPanel extends Panel {
         this.renderPanel();
       });
     });
+
+    const typeFilter = this.content.querySelector('#an-f-type') as HTMLSelectElement;
+    if (typeFilter) {
+      typeFilter.addEventListener('change', (e) => {
+        this.typeFilter = (e.target as HTMLSelectElement).value;
+        this.renderPanel();
+      });
+    }
+
+    const riskFilter = this.content.querySelector('#an-f-risk') as HTMLSelectElement;
+    if (riskFilter) {
+      riskFilter.addEventListener('change', (e) => {
+        this.riskFilter = (e.target as HTMLSelectElement).value;
+        this.renderPanel();
+      });
+    }
   }
 }

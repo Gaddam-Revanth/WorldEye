@@ -8,11 +8,11 @@ export { AI_DATA_CENTERS } from '../ai-datacenters';
 
 // Refresh intervals - shared across all variants
 export const REFRESH_INTERVALS = {
-  feeds: 5 * 60 * 1000,
-  markets: 4 * 60 * 1000,
-  crypto: 4 * 60 * 1000,
-  predictions: 5 * 60 * 1000,
-  ais: 10 * 60 * 1000,
+  feeds: 3 * 60 * 1000,       // 3 min (faster news)
+  markets: 2 * 60 * 1000,     // 2 min
+  crypto: 2 * 60 * 1000,      // 2 min
+  predictions: 3 * 60 * 1000, // 3 min
+  ais: 5 * 60 * 1000,         // 5 min (faster vessel tracking)
 };
 
 // Monitor colors - shared

@@ -434,11 +434,16 @@ export function isStateAffiliatedSource(sourceName: string): boolean {
 
 const FULL_FEEDS: Record<string, Feed[]> = {
   politics: [
+    { name: 'Reuters World', url: rss('https://news.google.com/rss/search?q=site:reuters.com+world&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'AP News', url: rss('https://news.google.com/rss/search?q=site:apnews.com&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'AFP', url: rss('https://news.google.com/rss/search?q=site:afp.com+world&hl=en-US&gl=US&ceid=US:en') },
+    { name: 'Bloomberg', url: rss('https://www.bloomberg.com/politics/feeds/site.xml') },
     { name: 'BBC World', url: rss('https://feeds.bbci.co.uk/news/world/rss.xml') },
     { name: 'Guardian World', url: rss('https://www.theguardian.com/world/rss') },
-    { name: 'AP News', url: rss('https://news.google.com/rss/search?q=site:apnews.com&hl=en-US&gl=US&ceid=US:en') },
-    { name: 'Reuters World', url: rss('https://news.google.com/rss/search?q=site:reuters.com+world&hl=en-US&gl=US&ceid=US:en') },
     { name: 'CNN World', url: rss('http://rss.cnn.com/rss/cnn_world.rss') },
+    { name: 'Al Jazeera', url: rss('https://www.aljazeera.com/xml/rss/all.xml') },
+    { name: 'DW News', url: rss('https://rss.dw.com/xml/rss-en-all') },
+    { name: 'France 24', url: rss('https://www.france24.com/en/rss') },
   ],
   us: [
     { name: 'NPR News', url: rss('https://feeds.npr.org/1001/rss.xml') },
@@ -1030,14 +1035,15 @@ const HAPPY_FEEDS: Record<string, Feed[]> = {
   ],
 };
 
+// Unified feeds combining all variants
+const UNIFIED_FEEDS: Record<string, Feed[]> = {
+  ...FULL_FEEDS,
+  ...TECH_FEEDS,
+  ...FINANCE_FEEDS,
+};
+
 // Variant-aware exports
-export const FEEDS = SITE_VARIANT === 'tech'
-  ? TECH_FEEDS
-  : SITE_VARIANT === 'finance'
-    ? FINANCE_FEEDS
-    : SITE_VARIANT === 'happy'
-      ? HAPPY_FEEDS
-      : FULL_FEEDS;
+export const FEEDS = SITE_VARIANT === 'happy' ? HAPPY_FEEDS : UNIFIED_FEEDS;
 
 export const SOURCE_REGION_MAP: Record<string, { labelKey: string; feedKeys: string[] }> = {
   // Full (geopolitical) variant regions

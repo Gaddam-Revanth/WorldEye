@@ -59,16 +59,35 @@ function toResponse(payload: CachedResponsePayload): Response {
 }
 
 async function fetchAndPersist(url: string): Promise<Response> {
-  const response = await fetch(proxyUrl(url));
-  if (response.ok && shouldPersistResponse(url)) {
-    try {
-      const body = await response.clone().text();
-      void setPersistentCache(buildResponseCacheKey(url), toCachedPayload(url, response, body));
-    } catch (error) {
-      console.warn('[proxy] Failed to persist API response cache', error);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+  try {
+    const response = await fetch(proxyUrl(url), {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      },
+    });
+    clearTimeout(timeoutId);
+
+    if (response.ok && shouldPersistResponse(url)) {
+      try {
+        const body = await response.clone().text();
+        void setPersistentCache(buildResponseCacheKey(url), toCachedPayload(url, response, body));
+      } catch (error) {
+        console.warn('[proxy] Failed to persist API response cache', error);
+      }
     }
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
   }
-  return response;
 }
 
 export async function fetchWithProxy(url: string): Promise<Response> {

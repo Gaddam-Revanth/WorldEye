@@ -59,6 +59,28 @@
   --font-body: var(--font-mono);
 }
 
+/* ============================================================
+   Variant Branding — overrides for WorldEye
+   ============================================================ */
+[data-variant="worldeye"] {
+  --accent: #00f2ff; /* Neon Cyan */
+  --status-live: #00f2ff;
+  --map-stroke: #005f6b;
+}
+
+[data-variant="worldeye"] .header {
+  border-bottom: 1px solid var(--accent);
+  background: rgba(10, 10, 10, 0.95);
+  box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+}
+
+[data-variant="worldeye"] .logo {
+  color: var(--accent);
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-shadow: 0 0 8px rgba(0, 242, 255, 0.5);
+}
+
 [dir="rtl"] {
   --font-body: 'Geeza Pro', 'SF Arabic', 'Tahoma', system-ui, sans-serif;
 }
@@ -2206,6 +2228,45 @@ canvas,
   font-size: 8px;
   font-weight: bold;
   animation: pulse-alert 1s infinite;
+}
+
+.cluster-items {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  border-left: 2px solid var(--border);
+}
+
+.cluster-sub-item {
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+  display: flex;
+  gap: 6px;
+  line-height: 1.2;
+}
+
+.cluster-sub-item:last-child {
+  margin-bottom: 0;
+}
+
+.sub-item-source {
+  color: var(--text-dim);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.sub-item-title {
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sub-item-title:hover {
+  text-decoration: underline;
+  color: var(--accent);
 }
 
 .lang-badge {

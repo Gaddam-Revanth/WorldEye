@@ -21,6 +21,7 @@ export interface UnifiedSettingsConfig {
   getAllSourceNames: () => string[];
   getLocalizedPanelName: (key: string, fallback: string) => string;
   isDesktopApp: boolean;
+  forceSync: () => Promise<void>;
 }
 
 type TabId = 'general' | 'panels' | 'sources';
@@ -128,6 +129,23 @@ export class UnifiedSettings {
         this.config.setSourcesEnabled(visible, false);
         this.renderSourcesGrid();
         this.updateSourcesCounter();
+        return;
+      }
+
+      // Force Sync
+      if (target.closest('#us-force-sync')) {
+        const btn = target.closest<HTMLButtonElement>('#us-force-sync');
+        if (btn && !btn.disabled) {
+          btn.disabled = true;
+          btn.classList.add('syncing');
+          const originalText = btn.innerHTML;
+          btn.textContent = t('common.syncing');
+          this.config.forceSync().finally(() => {
+            btn.disabled = false;
+            btn.classList.remove('syncing');
+            btn.innerHTML = originalText;
+          });
+        }
         return;
       }
     });
@@ -283,6 +301,21 @@ export class UnifiedSettings {
     const currentLang = getCurrentLanguage();
 
     let html = '';
+
+    // Data Sync section
+    html += `<div class="ai-flow-section-label">${t('components.insights.sectionDataSync')}</div>`;
+    html += `
+      <div class="ai-flow-toggle-row">
+        <div class="ai-flow-toggle-label-wrap">
+          <div class="ai-flow-toggle-label">${t('components.insights.forceSyncLabel')}</div>
+          <div class="ai-flow-toggle-desc">${t('components.insights.forceSyncDesc')}</div>
+        </div>
+        <button class="unified-settings-sync-btn" id="us-force-sync">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+          ${t('common.syncNow')}
+        </button>
+      </div>
+    `;
 
     // Map section
     html += `<div class="ai-flow-section-label">${t('components.insights.sectionMap')}</div>`;

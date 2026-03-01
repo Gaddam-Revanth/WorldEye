@@ -10,6 +10,24 @@ import { MODEL_CONFIGS, type ModelConfig } from '@/config/ml-config';
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 
+// Detect WebGPU support
+let device: 'webgpu' | 'wasm' | 'cpu' = 'wasm';
+async function detectDevice(): Promise<void> {
+  if (typeof navigator !== 'undefined' && (navigator as any).gpu) {
+    try {
+      const adapter = await (navigator as any).gpu.requestAdapter();
+      if (adapter) {
+        device = 'webgpu';
+        console.log('[MLWorker] WebGPU detected and enabled');
+        return;
+      }
+    } catch (e) {
+      console.warn('[MLWorker] WebGPU detection failed, falling back to wasm', e);
+    }
+  }
+  device = 'wasm';
+}
+
 // Message types
 interface InitMessage {
   type: 'init';
@@ -110,6 +128,7 @@ async function loadModel(modelId: string): Promise<void> {
     if (ort?.env) { try { ort.env.logLevel = 'error'; } catch { /* ignore */ } }
 
     const pipe = await pipeline(config.task, config.hfModel, {
+      device,
       progress_callback: (progress: { status: string; progress?: number }) => {
         if (progress.status === 'progress' && progress.progress !== undefined) {
           self.postMessage({
@@ -284,6 +303,7 @@ self.onmessage = async (event: MessageEvent<MLWorkerMessage>) => {
   try {
     switch (message.type) {
       case 'init': {
+        await detectDevice();
         self.postMessage({ type: 'ready', id: message.id });
         break;
       }

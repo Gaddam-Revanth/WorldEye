@@ -1,10 +1,10 @@
 import { Panel } from './Panel';
 import { WindowedList } from './VirtualList';
-import type { NewsItem, ClusteredEvent, DeviationLevel, RelatedAsset, RelatedAssetContext } from '@/types';
+import type { NewsItem, ClusteredEvent, DeviationLevel } from '@/types';
 import { THREAT_PRIORITY } from '@/services/threat-classifier';
 import { formatTime, getCSSColor } from '@/utils';
 import { escapeHtml, sanitizeUrl } from '@/utils/sanitize';
-import { analysisWorker, enrichWithVelocityML, getClusterAssetContext, MAX_DISTANCE_KM, activityTracker, generateSummary, translateText } from '@/services';
+import { analysisWorker, enrichWithVelocityML, activityTracker, generateSummary, translateText } from '@/services';
 import { getSourcePropagandaRisk, getSourceTier, getSourceType } from '@/config/feeds';
 import { SITE_VARIANT } from '@/config';
 import { t, getCurrentLanguage } from '@/services/i18n';
@@ -26,10 +26,6 @@ interface PreparedCluster {
 export class NewsPanel extends Panel {
   private clusteredMode = true;
   private deviationEl: HTMLElement | null = null;
-  private relatedAssetContext = new Map<string, RelatedAssetContext>();
-  private onRelatedAssetClick?: (asset: RelatedAsset) => void;
-  private onRelatedAssetsFocus?: (assets: RelatedAsset[], originLabel: string) => void;
-  private onRelatedAssetsClear?: () => void;
   private isFirstRender = true;
   private windowedList: WindowedList<PreparedCluster> | null = null;
   private useVirtualScroll = true;
@@ -43,8 +39,9 @@ export class NewsPanel extends Panel {
   private currentHeadlines: string[] = [];
   private isSummarizing = false;
 
-  constructor(id: string, title: string) {
+  constructor(id: string, title: string, options: { clustered?: boolean } = {}) {
     super({ id, title, showCount: true, trackActivity: true });
+    this.clusteredMode = options.clustered !== false;
     this.createDeviationIndicator();
     this.createSummarizeButton();
     this.setupActivityTracking();
@@ -91,14 +88,8 @@ export class NewsPanel extends Panel {
     this.element.addEventListener('click', this.boundClickHandler);
   }
 
-  public setRelatedAssetHandlers(options: {
-    onRelatedAssetClick?: (asset: RelatedAsset) => void;
-    onRelatedAssetsFocus?: (assets: RelatedAsset[], originLabel: string) => void;
-    onRelatedAssetsClear?: () => void;
-  }): void {
-    this.onRelatedAssetClick = options.onRelatedAssetClick;
-    this.onRelatedAssetsFocus = options.onRelatedAssetsFocus;
-    this.onRelatedAssetsClear = options.onRelatedAssetsClear;
+  public setRelatedAssetHandlers(): void {
+    // Legacy method maintained for layout compatibility, but asset mapping is disabled per user request
   }
 
   private createDeviationIndicator(): void {
@@ -285,7 +276,6 @@ export class NewsPanel extends Panel {
     this.renderRequestId += 1; // Cancel in-flight clustering from previous renders.
     this.setDataBadge('live');
     this.setCount(0);
-    this.relatedAssetContext.clear();
     this.currentHeadlines = [];
     this.setContent(`<div class="panel-empty">${escapeHtml(message)}</div>`);
   }
@@ -345,7 +335,6 @@ export class NewsPanel extends Panel {
 
     const totalItems = sorted.reduce((sum, c) => sum + c.sourceCount, 0);
     this.setCount(totalItems);
-    this.relatedAssetContext.clear();
 
     // Store headlines for summarization (cap at 5 to reduce entity conflation in small models)
     this.currentHeadlines = sorted.slice(0, 5).map(c => c.primaryTitle);
@@ -468,27 +457,18 @@ export class NewsPanel extends Panel {
         .join('')
       : '';
 
-    const assetContext = getClusterAssetContext(cluster);
-    if (assetContext && assetContext.assets.length > 0) {
-      this.relatedAssetContext.set(cluster.id, assetContext);
-    }
-
-    const relatedAssetsHtml = assetContext && assetContext.assets.length > 0
+    const clusterItemsHtml = cluster.allItems.length > 1
       ? `
-        <div class="related-assets" data-cluster-id="${escapeHtml(cluster.id)}">
-          <div class="related-assets-header">
-            ${t('components.newsPanel.relatedAssetsNear', { location: escapeHtml(assetContext.origin.label) })}
-            <span class="related-assets-range">(${MAX_DISTANCE_KM}km)</span>
-          </div>
-          <div class="related-assets-list">
-            ${assetContext.assets.map(asset => `
-              <button class="related-asset" data-cluster-id="${escapeHtml(cluster.id)}" data-asset-id="${escapeHtml(asset.id)}" data-asset-type="${escapeHtml(asset.type)}">
-                <span class="related-asset-type">${escapeHtml(this.getLocalizedAssetLabel(asset.type))}</span>
-                <span class="related-asset-name">${escapeHtml(asset.name)}</span>
-                <span class="related-asset-distance">${Math.round(asset.distanceKm)}km</span>
-              </button>
+        <div class="cluster-items">
+          ${cluster.allItems
+            .filter(item => item.link !== cluster.primaryLink)
+            .slice(0, 3)
+            .map(item => `
+              <div class="cluster-sub-item">
+                <span class="sub-item-source">${escapeHtml(item.source)}:</span>
+                <a class="sub-item-title" href="${sanitizeUrl(item.link)}" target="_blank" rel="noopener">${escapeHtml(item.title)}</a>
+              </div>
             `).join('')}
-          </div>
         </div>
       `
       : '';
@@ -531,44 +511,12 @@ export class NewsPanel extends Panel {
           <span class="item-time">${formatTime(cluster.lastUpdated)}</span>
           ${getCurrentLanguage() !== 'en' ? `<button class="item-translate-btn" title="Translate" data-text="${escapeHtml(cluster.primaryTitle)}">文</button>` : ''}
         </div>
-        ${relatedAssetsHtml}
+        ${clusterItemsHtml}
       </div>
     `;
   }
 
   private bindRelatedAssetEvents(): void {
-    const containers = this.content.querySelectorAll<HTMLDivElement>('.related-assets');
-    containers.forEach((container) => {
-      const clusterId = container.dataset.clusterId;
-      if (!clusterId) return;
-      const context = this.relatedAssetContext.get(clusterId);
-      if (!context) return;
-
-      container.addEventListener('mouseenter', () => {
-        this.onRelatedAssetsFocus?.(context.assets, context.origin.label);
-      });
-
-      container.addEventListener('mouseleave', () => {
-        this.onRelatedAssetsClear?.();
-      });
-    });
-
-    const assetButtons = this.content.querySelectorAll<HTMLButtonElement>('.related-asset');
-    assetButtons.forEach((button) => {
-      button.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const clusterId = button.dataset.clusterId;
-        const assetId = button.dataset.assetId;
-        const assetType = button.dataset.assetType as RelatedAsset['type'] | undefined;
-        if (!clusterId || !assetId || !assetType) return;
-        const context = this.relatedAssetContext.get(clusterId);
-        const asset = context?.assets.find(item => item.id === assetId && item.type === assetType);
-        if (asset) {
-          this.onRelatedAssetClick?.(asset);
-        }
-      });
-    });
-
     // Translation buttons
     const translateBtns = this.content.querySelectorAll<HTMLElement>('.item-translate-btn');
     translateBtns.forEach(btn => {
@@ -578,17 +526,6 @@ export class NewsPanel extends Panel {
         if (text) this.handleTranslate(btn, text);
       });
     });
-  }
-
-  private getLocalizedAssetLabel(type: RelatedAsset['type']): string {
-    const keyMap: Record<RelatedAsset['type'], string> = {
-      pipeline: 'modals.countryBrief.infra.pipeline',
-      cable: 'modals.countryBrief.infra.cable',
-      datacenter: 'modals.countryBrief.infra.datacenter',
-      base: 'modals.countryBrief.infra.base',
-      nuclear: 'modals.countryBrief.infra.nuclear',
-    };
-    return t(keyMap[type]);
   }
 
   /**

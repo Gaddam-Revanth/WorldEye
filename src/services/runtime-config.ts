@@ -22,6 +22,7 @@ export type RuntimeSecretKey =
   | 'UC_DP_KEY'
   | 'OLLAMA_API_URL'
   | 'OLLAMA_MODEL'
+  | 'NANOCLAW_API_URL'
   | 'WORLDMONITOR_API_KEY'
   | 'WTO_API_KEY';
 
@@ -41,6 +42,7 @@ export type RuntimeFeatureId =
   | 'finnhubMarkets'
   | 'nasaFirms'
   | 'aiOllama'
+  | 'aiNanoclaw'
   | 'wtoTrade'
   | 'supplyChain';
 
@@ -87,6 +89,7 @@ const defaultToggles: Record<RuntimeFeatureId, boolean> = {
   finnhubMarkets: true,
   nasaFirms: true,
   aiOllama: true,
+  aiNanoclaw: true,
   wtoTrade: true,
   supplyChain: true,
 };
@@ -98,6 +101,13 @@ export const RUNTIME_FEATURES: RuntimeFeatureDefinition[] = [
     description: 'Local LLM provider via OpenAI-compatible endpoint (Ollama or LM Studio, desktop-first).',
     requiredSecrets: ['OLLAMA_API_URL', 'OLLAMA_MODEL'],
     fallback: 'Falls back to Groq, then OpenRouter, then local browser model.',
+  },
+  {
+    id: 'aiNanoclaw',
+    name: 'Nanoclaw agent summarization',
+    description: 'Local-first agent runtime for fast, accurate Claude-powered summaries and classification.',
+    requiredSecrets: ['NANOCLAW_API_URL'],
+    fallback: 'Falls back to Ollama, then Groq, then OpenRouter.',
   },
   {
     id: 'aiGroq',

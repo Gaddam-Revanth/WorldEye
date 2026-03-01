@@ -115,12 +115,23 @@ export class AlertRulesPanel extends Panel {
 
   private renderCreateForm(): string {
     const editRule = this.editingRuleId ? this.rules.find(r => r.id === this.editingRuleId) : null;
-
-    // We only support one condition for simplicity in this UI, but backend supports multiple
     const firstCond = editRule?.conditions[0] || { type: 'keyword', operator: 'contains', value: '' };
+
+    const presetsHtml = `
+      <div class="ar-presets">
+        <label>Presets</label>
+        <div class="ar-preset-buttons">
+          <button class="ar-preset-btn" data-preset="protest">Large Protest</button>
+          <button class="ar-preset-btn" data-preset="bank">Bank Stress</button>
+          <button class="ar-preset-btn" data-preset="air">Air Quality</button>
+          <button class="ar-preset-btn" data-preset="cyber">Cyber Attack</button>
+        </div>
+      </div>
+    `;
 
     return `
       <div class="ar-form">
+        ${!this.editingRuleId ? presetsHtml : ''}
         <label>Rule Name</label>
         <input type="text" id="ar-f-name" class="ar-input" value="${escapeHtml(editRule?.name || '')}" placeholder="e.g. Critical Cyber Threats">
         
@@ -184,7 +195,10 @@ export class AlertRulesPanel extends Panel {
       const colorStyle = t.rule.highlightColor ? `border-left-color: ${t.rule.highlightColor};` : '';
       return `
         <div class="ar-trigger-card" style="${colorStyle}">
-          <div class="ar-trigger-rule">${escapeHtml(t.rule.ruleName)}</div>
+          <div class="ar-trigger-header">
+            <div class="ar-trigger-rule">${escapeHtml(t.rule.ruleName)}</div>
+            <button class="ar-btn-brief btn-brief" data-id="${t.event.id}">Brief</button>
+          </div>
           <div class="ar-trigger-event">${escapeHtml(t.event.primaryTitle)}</div>
           <div class="ar-trigger-meta">
             ${new Date(t.event.lastUpdated || t.event.firstSeen).toLocaleTimeString()}
@@ -237,6 +251,15 @@ export class AlertRulesPanel extends Panel {
       });
     });
 
+    this.content.querySelectorAll('.btn-brief').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const eventId = (e.currentTarget as HTMLElement).dataset.id;
+        if (eventId) {
+          window.dispatchEvent(new CustomEvent('wm-open-event-story', { detail: { eventId } }));
+        }
+      });
+    });
+
     const saveBtn = this.content.querySelector('#ar-btn-save');
     if (saveBtn) {
       saveBtn.addEventListener('click', async () => {
@@ -279,5 +302,47 @@ export class AlertRulesPanel extends Panel {
         this.renderPanel();
       });
     }
+
+    this.content.querySelectorAll('.ar-preset-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const preset = (e.currentTarget as HTMLElement).dataset.preset;
+        const nameInput = this.content.querySelector('#ar-f-name') as HTMLInputElement;
+        const typeSelect = this.content.querySelector('#ar-f-type') as HTMLSelectElement;
+        const opSelect = this.content.querySelector('#ar-f-op') as HTMLSelectElement;
+        const valInput = this.content.querySelector('#ar-f-val') as HTMLInputElement;
+        const colorSelect = this.content.querySelector('#ar-f-color') as HTMLSelectElement;
+
+        switch (preset) {
+          case 'protest':
+            nameInput.value = 'Large Protests Detected';
+            typeSelect.value = 'keyword';
+            opSelect.value = 'contains';
+            valInput.value = 'protest, demonstration, unrest';
+            colorSelect.value = '#ffaa00';
+            break;
+          case 'bank':
+            nameInput.value = 'Financial Stress Signals';
+            typeSelect.value = 'keyword';
+            opSelect.value = 'contains';
+            valInput.value = 'bank, liquidity, default, stress';
+            colorSelect.value = '#ff4444';
+            break;
+          case 'air':
+            nameInput.value = 'Air Quality Warning';
+            typeSelect.value = 'keyword';
+            opSelect.value = 'contains';
+            valInput.value = 'unhealthy, pollution, haze, smog';
+            colorSelect.value = '#ffaa00';
+            break;
+          case 'cyber':
+            nameInput.value = 'Cyber Attack Alert';
+            typeSelect.value = 'keyword';
+            opSelect.value = 'contains';
+            valInput.value = 'cyber, hack, breach, ransomware, ddos';
+            colorSelect.value = '#ff4444';
+            break;
+        }
+      });
+    });
   }
 }

@@ -63,7 +63,7 @@ export class StrategicRiskPanel extends Panel {
   }
 
   private startAutoRefresh(): void {
-    this.refreshInterval = setInterval(() => this.refresh(), 5 * 60 * 1000);
+    this.refreshInterval = setInterval(() => this.refresh(), 3 * 60 * 1000); // 3 min (was 5)
   }
 
   public async refresh(): Promise<void> {

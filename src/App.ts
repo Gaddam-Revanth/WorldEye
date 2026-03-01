@@ -20,6 +20,7 @@ import { isDesktopRuntime } from '@/services/runtime';
 import { trackEvent, trackDeeplinkOpened } from '@/services/analytics';
 import { preloadCountryGeometry, getCountryNameByCode } from '@/services/country-geometry';
 import { initI18n } from '@/services/i18n';
+import { ML_THRESHOLDS } from '@/config/ml-config';
 
 import { DesktopUpdater } from '@/app/desktop-updater';
 import { CountryIntelManager } from '@/app/country-intel';
@@ -81,11 +82,6 @@ export class App {
       panelSettings = { ...DEFAULT_PANELS };
     } else {
       mapLayers = loadFromStorage<MapLayers>(STORAGE_KEYS.mapLayers, defaultLayers);
-      // Happy variant: force non-happy layers off even if localStorage has stale true values
-      if (currentVariant === 'happy') {
-        const unhappyLayers: (keyof MapLayers)[] = ['conflicts', 'bases', 'hotspots', 'nuclear', 'irradiators', 'sanctions', 'military', 'protests', 'pipelines', 'waterways', 'ais', 'flights', 'spaceports', 'minerals', 'natural', 'fires', 'outages', 'cyberThreats', 'weather', 'economic', 'cables', 'datacenters', 'ucdpEvents', 'displacement', 'climate'];
-        unhappyLayers.forEach(layer => { mapLayers[layer] = false; });
-      }
       panelSettings = loadFromStorage<Record<string, PanelConfig>>(
         STORAGE_KEYS.panels,
         DEFAULT_PANELS
@@ -171,21 +167,6 @@ export class App {
 
     let initialUrlState: ParsedMapUrlState | null = parseMapUrlState(window.location.search, mapLayers);
     if (initialUrlState.layers) {
-      if (currentVariant === 'tech') {
-        const geoLayers: (keyof MapLayers)[] = ['conflicts', 'bases', 'hotspots', 'nuclear', 'irradiators', 'sanctions', 'military', 'protests', 'pipelines', 'waterways', 'ais', 'flights', 'spaceports', 'minerals'];
-        const urlLayers = initialUrlState.layers;
-        geoLayers.forEach(layer => {
-          urlLayers[layer] = false;
-        });
-      }
-      // For happy variant, force off all non-happy layers (including natural events)
-      if (currentVariant === 'happy') {
-        const unhappyLayers: (keyof MapLayers)[] = ['conflicts', 'bases', 'hotspots', 'nuclear', 'irradiators', 'sanctions', 'military', 'protests', 'pipelines', 'waterways', 'ais', 'flights', 'spaceports', 'minerals', 'natural', 'fires', 'outages', 'cyberThreats', 'weather', 'economic', 'cables', 'datacenters', 'ucdpEvents', 'displacement', 'climate'];
-        const urlLayers = initialUrlState.layers;
-        unhappyLayers.forEach(layer => {
-          urlLayers[layer] = false;
-        });
-      }
       mapLayers = initialUrlState.layers;
     }
     if (!CYBER_LAYER_ENABLED) {
@@ -246,6 +227,8 @@ export class App {
       PANEL_SPANS_KEY,
     };
 
+    document.documentElement.setAttribute('data-variant', SITE_VARIANT);
+    
     // Instantiate modules (callbacks wired after all modules exist)
     this.refreshScheduler = new RefreshScheduler(this.state);
     this.countryIntel = new CountryIntelManager(this.state);
@@ -297,6 +280,12 @@ export class App {
     const aiFlow = getAiFlowSettings();
     if (aiFlow.browserModel || isDesktopRuntime()) {
       await mlWorker.init();
+      const caps = mlWorker.mlCapabilities;
+      try {
+        if (caps && caps.isSupported && caps.estimatedMemoryMB >= ML_THRESHOLDS.memoryBudgetMB) {
+          mlWorker.loadModel('summarization-beta').catch(() => {});
+        }
+      } catch {}
     }
 
     this.unsubAiFlow = subscribeAiFlowChange((key) => {
@@ -476,45 +465,39 @@ export class App {
     // Always refresh news for all variants
     this.refreshScheduler.scheduleRefresh('news', () => this.dataLoader.loadNews(), REFRESH_INTERVALS.feeds);
 
-    // Happy variant only refreshes news -- skip all geopolitical/financial/military refreshes
-    if (SITE_VARIANT !== 'happy') {
-      this.refreshScheduler.registerAll([
-        { name: 'markets', fn: () => this.dataLoader.loadMarkets(), intervalMs: REFRESH_INTERVALS.markets },
-        { name: 'predictions', fn: () => this.dataLoader.loadPredictions(), intervalMs: REFRESH_INTERVALS.predictions },
-        { name: 'pizzint', fn: () => this.dataLoader.loadPizzInt(), intervalMs: 10 * 60 * 1000 },
-        { name: 'natural', fn: () => this.dataLoader.loadNatural(), intervalMs: 5 * 60 * 1000, condition: () => this.state.mapLayers.natural },
-        { name: 'weather', fn: () => this.dataLoader.loadWeatherAlerts(), intervalMs: 10 * 60 * 1000, condition: () => this.state.mapLayers.weather },
-        { name: 'fred', fn: () => this.dataLoader.loadFredData(), intervalMs: 30 * 60 * 1000 },
-        { name: 'oil', fn: () => this.dataLoader.loadOilAnalytics(), intervalMs: 30 * 60 * 1000 },
-        { name: 'spending', fn: () => this.dataLoader.loadGovernmentSpending(), intervalMs: 60 * 60 * 1000 },
-        { name: 'bis', fn: () => this.dataLoader.loadBisData(), intervalMs: 60 * 60 * 1000 },
-        { name: 'freshWater', fn: () => this.dataLoader.loadFreshWaterData(), intervalMs: 60 * 60 * 1000 },
-        { name: 'firms', fn: () => this.dataLoader.loadFirmsData(), intervalMs: 30 * 60 * 1000 },
-        { name: 'ais', fn: () => this.dataLoader.loadAisSignals(), intervalMs: REFRESH_INTERVALS.ais, condition: () => this.state.mapLayers.ais },
-        { name: 'cables', fn: () => this.dataLoader.loadCableActivity(), intervalMs: 30 * 60 * 1000, condition: () => this.state.mapLayers.cables },
-        { name: 'cableHealth', fn: () => this.dataLoader.loadCableHealth(), intervalMs: 5 * 60 * 1000, condition: () => this.state.mapLayers.cables },
-        { name: 'flights', fn: () => this.dataLoader.loadFlightDelays(), intervalMs: 10 * 60 * 1000, condition: () => this.state.mapLayers.flights },
-        {
-          name: 'cyberThreats', fn: () => {
-            this.state.cyberThreatsCache = null;
-            return this.dataLoader.loadCyberThreats();
-          }, intervalMs: 10 * 60 * 1000, condition: () => CYBER_LAYER_ENABLED && this.state.mapLayers.cyberThreats
-        },
-      ]);
-    }
+    // Unified data refresh for all streams
+    this.refreshScheduler.registerAll([
+      { name: 'markets', fn: () => this.dataLoader.loadMarkets(), intervalMs: REFRESH_INTERVALS.markets },
+      { name: 'predictions', fn: () => this.dataLoader.loadPredictions(), intervalMs: REFRESH_INTERVALS.predictions },
+      { name: 'pizzint', fn: () => this.dataLoader.loadPizzInt(), intervalMs: 5 * 60 * 1000 },
+      { name: 'natural', fn: () => this.dataLoader.loadNatural(), intervalMs: 3 * 60 * 1000, condition: () => this.state.mapLayers.natural },
+      { name: 'weather', fn: () => this.dataLoader.loadWeatherAlerts(), intervalMs: 5 * 60 * 1000, condition: () => this.state.mapLayers.weather },
+      { name: 'fred', fn: () => this.dataLoader.loadFredData(), intervalMs: 20 * 60 * 1000 },
+      { name: 'oil', fn: () => this.dataLoader.loadOilAnalytics(), intervalMs: 20 * 60 * 1000 },
+      { name: 'spending', fn: () => this.dataLoader.loadGovernmentSpending(), intervalMs: 60 * 60 * 1000 },
+      { name: 'bis', fn: () => this.dataLoader.loadBisData(), intervalMs: 60 * 60 * 1000 },
+      { name: 'freshWater', fn: () => this.dataLoader.loadFreshWaterData(), intervalMs: 60 * 60 * 1000 },
+      { name: 'firms', fn: () => this.dataLoader.loadFirmsData(), intervalMs: 15 * 60 * 1000 },
+      { name: 'ais', fn: () => this.dataLoader.loadAisSignals(), intervalMs: REFRESH_INTERVALS.ais, condition: () => this.state.mapLayers.ais },
+      { name: 'cables', fn: () => this.dataLoader.loadCableActivity(), intervalMs: 15 * 60 * 1000, condition: () => this.state.mapLayers.cables },
+      { name: 'cableHealth', fn: () => this.dataLoader.loadCableHealth(), intervalMs: 3 * 60 * 1000, condition: () => this.state.mapLayers.cables },
+      { name: 'flights', fn: () => this.dataLoader.loadFlightDelays(), intervalMs: 5 * 60 * 1000, condition: () => this.state.mapLayers.flights },
+      {
+        name: 'cyberThreats', fn: () => {
+          this.state.cyberThreatsCache = null;
+          return this.dataLoader.loadCyberThreats();
+        }, intervalMs: 5 * 60 * 1000, condition: () => CYBER_LAYER_ENABLED && this.state.mapLayers.cyberThreats
+      },
+    ]);
 
-    // WTO trade policy data — annual data, poll every 10 min to avoid hammering upstream
-    if (SITE_VARIANT === 'full' || SITE_VARIANT === 'finance') {
-      this.refreshScheduler.scheduleRefresh('tradePolicy', () => this.dataLoader.loadTradePolicy(), 10 * 60 * 1000);
-      this.refreshScheduler.scheduleRefresh('supplyChain', () => this.dataLoader.loadSupplyChain(), 10 * 60 * 1000);
-    }
+    // WTO trade policy data
+    this.refreshScheduler.scheduleRefresh('tradePolicy', () => this.dataLoader.loadTradePolicy(), 10 * 60 * 1000);
+    this.refreshScheduler.scheduleRefresh('supplyChain', () => this.dataLoader.loadSupplyChain(), 10 * 60 * 1000);
 
-    // Refresh intelligence signals for CII (geopolitical variant only)
-    if (SITE_VARIANT === 'full') {
-      this.refreshScheduler.scheduleRefresh('intelligence', () => {
-        this.state.intelligenceCache = {};
-        return this.dataLoader.loadIntelligenceSignals();
-      }, 5 * 60 * 1000);
-    }
+    // Refresh intelligence signals for CII
+    this.refreshScheduler.scheduleRefresh('intelligence', () => {
+      this.state.intelligenceCache = {};
+      return this.dataLoader.loadIntelligenceSignals();
+    }, 3 * 60 * 1000);
   }
 }

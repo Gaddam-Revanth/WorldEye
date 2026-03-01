@@ -545,6 +545,10 @@ const RSS_PROXY_ALLOWED_DOMAINS = new Set([
   'rss.dw.com', 'www.africanews.com', 'www.lasillavacia.com', 'www.channelnewsasia.com',
   'www.thehindu.com', 'news.un.org', 'www.iaea.org', 'www.who.int', 'www.cisa.gov',
   'www.crisisgroup.org',
+  // India news (dev allowlist)
+  'indianexpress.com', 'www.hindustantimes.com', 'timesofindia.indiatimes.com',
+  'www.indiatoday.in', 'www.livemint.com', 'www.business-standard.com',
+  'economictimes.indiatimes.com', 'theprint.in', 'scroll.in', 'thewire.in', 'www.news18.com',
   // Think tanks
   'rusi.org', 'warontherocks.com', 'www.aei.org', 'responsiblestatecraft.org',
   'www.fpri.org', 'jamestown.org', 'www.chathamhouse.org', 'ecfr.eu', 'www.gmfus.org',

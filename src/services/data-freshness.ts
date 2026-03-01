@@ -126,6 +126,15 @@ class DataFreshnessTracker {
   }
 
   /**
+   * Check if a data source is stale (exceeds FRESH_THRESHOLD)
+   */
+  isStale(sourceId: DataSourceId): boolean {
+    const source = this.sources.get(sourceId);
+    if (!source?.lastUpdate) return true;
+    return Date.now() - source.lastUpdate.getTime() > FRESH_THRESHOLD;
+  }
+
+  /**
    * Record that a data source received new data
    */
   recordUpdate(sourceId: DataSourceId, itemCount: number = 1): void {

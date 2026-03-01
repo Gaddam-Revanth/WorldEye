@@ -483,6 +483,7 @@ export class EventHandlerManager implements AppModule {
       getAllSourceNames: () => this.getAllSourceNames(),
       getLocalizedPanelName: (key: string, fallback: string) => this.getLocalizedPanelName(key, fallback),
       isDesktopApp: this.ctx.isDesktopApp,
+      forceSync: () => this.callbacks.loadAllData(),
     });
 
     const mount = document.getElementById('unifiedSettingsMount');

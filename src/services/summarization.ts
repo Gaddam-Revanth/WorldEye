@@ -33,7 +33,16 @@ export interface SummarizeOptions {
 
 // ── Sebuf client (replaces direct fetch to /api/{provider}-summarize) ──
 
-const newsClient = new NewsServiceClient('', { fetch: (...args) => globalThis.fetch(...args) });
+const newsClient = new NewsServiceClient('', {
+  fetch: (url, options) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout for API summarization
+    return globalThis.fetch(url, {
+      ...options,
+      signal: options?.signal || controller.signal,
+    }).finally(() => clearTimeout(timeout));
+  }
+});
 const summaryBreaker = createCircuitBreaker<SummarizeArticleResponse>({ name: 'News Summarization', cacheTtlMs: 0 });
 
 const emptySummaryFallback: SummarizeArticleResponse = { summary: '', provider: '', model: '', cached: false, skipped: false, fallback: true, tokens: 0, reason: '', error: '', errorType: '' };
@@ -100,7 +109,7 @@ async function tryApiProvider(
 
 // ── Browser T5 provider (different interface -- no API call) ──
 
-async function tryBrowserT5(headlines: string[], modelId?: string): Promise<SummarizationResult | null> {
+async function tryBrowserT5(headlines: string[], modelId?: string, onProgress?: ProgressCallback): Promise<SummarizationResult | null> {
   try {
     if (!mlWorker.isAvailable) {
       console.log('[Summarization] Browser ML not available');
@@ -108,12 +117,18 @@ async function tryBrowserT5(headlines: string[], modelId?: string): Promise<Summ
     }
     lastAttemptedProvider = 'browser';
 
-    const combinedText = headlines.slice(0, 5).map(h => h.slice(0, 80)).join('. ');
-    const prompt = `Summarize the most important headline in 2 concise sentences (under 60 words): ${combinedText}`;
+    const targetModel = modelId || 'summarization';
+    if (!mlWorker.isModelLoaded(targetModel)) {
+      onProgress?.(5, 5, 'Loading browser model...');
+      await mlWorker.loadModel(targetModel);
+    }
 
-    const [summary] = await mlWorker.summarize([prompt], modelId);
+    const combinedText = headlines.slice(0, 5).join('. ');
+    onProgress?.(5, 5, 'Analyzing headlines...');
+    const [summary] = await mlWorker.summarize([combinedText], targetModel);
 
-    if (!summary || summary.length < 20 || summary.toLowerCase().includes('summarize')) {
+    if (!summary || summary.length < 5) {
+      console.warn('[Summarization] Browser T5 returned invalid/short summary:', summary);
       return null;
     }
 
@@ -161,8 +176,19 @@ export async function generateSummary(
   lang: string = 'en',
   options?: SummarizeOptions,
 ): Promise<SummarizationResult | null> {
-  if (!headlines || headlines.length < 2) {
+  if (!headlines || headlines.length < 1) {
+    console.warn('[Summarization] No headlines provided');
     return null;
+  }
+
+  // If only 1 headline, use it as is (no summary needed)
+  if (headlines.length === 1 && headlines[0]) {
+    return {
+      summary: headlines[0],
+      provider: 'cache',
+      model: 'original',
+      cached: false
+    };
   }
 
   lastAttemptedProvider = 'none';
@@ -187,14 +213,14 @@ async function generateSummaryInternal(
   options?: SummarizeOptions,
 ): Promise<SummarizationResult | null> {
   if (BETA_MODE) {
-    const modelReady = mlWorker.isAvailable && mlWorker.isModelLoaded('summarization-beta');
+    const modelReady = mlWorker.isAvailable && mlWorker.isModelLoaded('summarization');
 
     if (modelReady) {
       const totalSteps = 1 + API_PROVIDERS.length;
       // Model already loaded -- use browser T5-small first
       if (!options?.skipBrowserFallback) {
         onProgress?.(1, totalSteps, 'Running local AI model (beta)...');
-        const browserResult = await tryBrowserT5(headlines, 'summarization-beta');
+        const browserResult = await tryBrowserT5(headlines, 'summarization', onProgress);
         if (browserResult) {
           console.log('[BETA] Browser T5-small:', browserResult.summary);
           const groqProvider = API_PROVIDERS.find(p => p.provider === 'groq');
@@ -215,7 +241,7 @@ async function generateSummaryInternal(
       const totalSteps = API_PROVIDERS.length + 2;
       console.log('[BETA] T5-small not loaded yet, using cloud providers first');
       if (mlWorker.isAvailable && !options?.skipBrowserFallback) {
-        mlWorker.loadModel('summarization-beta').catch(() => {});
+        mlWorker.loadModel('summarization').catch(() => {});
       }
 
       // API providers while model loads
@@ -230,7 +256,7 @@ async function generateSummaryInternal(
       // Last resort: try browser T5 (may have finished loading by now)
       if (mlWorker.isAvailable && !options?.skipBrowserFallback) {
         onProgress?.(API_PROVIDERS.length + 1, totalSteps, 'Waiting for local AI model...');
-        const browserResult = await tryBrowserT5(headlines, 'summarization-beta');
+        const browserResult = await tryBrowserT5(headlines, 'summarization', onProgress);
         if (browserResult) return browserResult;
       }
 
@@ -251,12 +277,12 @@ async function generateSummaryInternal(
   if (chainResult) return chainResult;
 
   if (!options?.skipBrowserFallback) {
-    onProgress?.(totalSteps, totalSteps, 'Loading local AI model...');
-    const browserResult = await tryBrowserT5(headlines);
+    onProgress?.(totalSteps, totalSteps, 'Inference with browser model...');
+    const browserResult = await tryBrowserT5(headlines, undefined, onProgress);
     if (browserResult) return browserResult;
   }
 
-  console.warn('[Summarization] All providers failed');
+  console.warn('[Summarization] All providers exhausted without valid summary');
   return null;
 }
 

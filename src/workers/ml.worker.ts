@@ -118,34 +118,38 @@ async function loadModel(modelId: string): Promise<void> {
   const config = getModelConfig(modelId);
   if (!config) throw new Error(`Unknown model: ${modelId}`);
 
-  console.log(`[MLWorker] Loading model: ${config.hfModel}`);
+  console.log(`[MLWorker] Starting to load model: ${config.hfModel} (${config.size / 1024 / 1024} MB)`);
   const startTime = Date.now();
 
   const loadPromise = (async () => {
-    // Suppress verbose ONNX Runtime warnings (CleanUnusedInitializersAndNodeArgs)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ort = (globalThis as any).ort;
-    if (ort?.env) { try { ort.env.logLevel = 'error'; } catch { /* ignore */ } }
+    try {
+      // Suppress verbose ONNX Runtime warnings
+      const ort = (globalThis as any).ort;
+      if (ort?.env) { try { ort.env.logLevel = 'error'; } catch { /* ignore */ } }
 
-    const pipe = await pipeline(config.task, config.hfModel, {
-      device,
-      progress_callback: (progress: { status: string; progress?: number }) => {
-        if (progress.status === 'progress' && progress.progress !== undefined) {
-          self.postMessage({
-            type: 'model-progress',
-            modelId,
-            progress: progress.progress,
-          });
-        }
-      },
-    });
+      const pipe = await pipeline(config.task, config.hfModel, {
+        device,
+        progress_callback: (progress: { status: string; progress?: number }) => {
+          if (progress.status === 'progress' && progress.progress !== undefined) {
+            self.postMessage({
+              type: 'model-progress',
+              modelId,
+              progress: progress.progress,
+            });
+          }
+        },
+      });
 
-    loadedPipelines.set(modelId, pipe);
-    loadingPromises.delete(modelId);
-    console.log(`[MLWorker] Model loaded in ${Date.now() - startTime}ms: ${modelId}`);
-
-    // Notify manager that model is now available (no id = unsolicited notification)
-    self.postMessage({ type: 'model-loaded', modelId });
+      loadedPipelines.set(modelId, pipe);
+      console.log(`[MLWorker] Successfully loaded ${modelId} in ${Date.now() - startTime}ms`);
+      self.postMessage({ type: 'model-loaded', modelId });
+    } catch (e) {
+      console.error(`[MLWorker] Critical failure loading model ${modelId}:`, e);
+      loadingPromises.delete(modelId);
+      throw e;
+    } finally {
+      loadingPromises.delete(modelId);
+    }
   })();
 
   loadingPromises.set(modelId, loadPromise);
@@ -174,20 +178,34 @@ async function embedTexts(texts: string[]): Promise<number[][]> {
 }
 
 async function summarizeTexts(texts: string[], modelId = 'summarization'): Promise<string[]> {
-  await loadModel(modelId);
-  const pipe = loadedPipelines.get(modelId)!;
+  try {
+    await loadModel(modelId);
+    const pipe = loadedPipelines.get(modelId)!;
 
-  const results: string[] = [];
-  for (const text of texts) {
-    const output = await pipe(`summarize: ${text}`, {
-      max_new_tokens: 64,
-      min_length: 10,
-    });
-    const result = (output as Array<{ generated_text: string }>)[0];
-    results.push(result?.generated_text ?? '');
+    const results: string[] = [];
+    for (const text of texts) {
+      if (!text || text.trim().length < 5) {
+        results.push(text);
+        continue;
+      }
+
+      console.log(`[MLWorker] Summarizing (${modelId}): ${text.slice(0, 50)}...`);
+      const output = await pipe(`summarize: ${text}`, {
+        max_new_tokens: 64,
+        min_length: 5,
+        early_stopping: true,
+      });
+      const result = (output as Array<{ generated_text: string }>)[0];
+      const summary = result?.generated_text?.trim() || '';
+      console.log(`[MLWorker] Summary result: ${summary.slice(0, 50)}...`);
+      results.push(summary);
+    }
+
+    return results;
+  } catch (e) {
+    console.error(`[MLWorker] Summarization failed for ${modelId}:`, e);
+    throw e;
   }
-
-  return results;
 }
 
 async function classifySentiment(texts: string[]): Promise<Array<{ label: string; score: number }>> {

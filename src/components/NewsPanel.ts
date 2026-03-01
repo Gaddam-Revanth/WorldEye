@@ -145,13 +145,22 @@ export class NewsPanel extends Panel {
     this.summaryContainer.innerHTML = `<div class="panel-summary-loading">${t('components.newsPanel.generatingSummary')}</div>`;
 
     try {
-      const result = await generateSummary(this.currentHeadlines.slice(0, 8), undefined, undefined, currentLang);
+      const result = await generateSummary(
+        this.currentHeadlines.slice(0, 8),
+        (step, total, msg) => {
+          if (this.summaryContainer) {
+            this.summaryContainer.innerHTML = `<div class="panel-summary-loading">${escapeHtml(msg)} (${step}/${total})</div>`;
+          }
+        },
+        undefined,
+        currentLang
+      );
       if (result?.summary) {
         this.setCachedSummary(cacheKey, result.summary);
         this.showSummary(result.summary);
       } else {
-        this.summaryContainer.innerHTML = '<div class="panel-summary-error">Could not generate summary</div>';
-        setTimeout(() => this.hideSummary(), 3000);
+        this.summaryContainer.innerHTML = `<div class="panel-summary-error">${t('components.newsPanel.summaryFailed')}</div>`;
+        setTimeout(() => this.hideSummary(), 5000);
       }
     } catch {
       this.summaryContainer.innerHTML = '<div class="panel-summary-error">Summary failed</div>';

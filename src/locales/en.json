@@ -1196,6 +1196,7 @@
       "close": "Close",
       "summarize": "Summarize this panel",
       "generatingSummary": "Generating summary...",
+      "summaryFailed": "Could not generate summary",
       "sources": "{{count}} sources",
       "relatedAssetsNear": "Related assets near {{location}}"
     },

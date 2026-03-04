@@ -24,6 +24,11 @@ export interface SummarizationResult {
   cached: boolean;
 }
 
+export interface SummaryInput {
+  title: string;
+  description?: string;
+}
+
 export type ProgressCallback = (step: number, total: number, message: string) => void;
 
 export interface SummarizeOptions {
@@ -68,18 +73,32 @@ let lastAttemptedProvider = 'none';
 
 async function tryApiProvider(
   providerDef: ApiProviderDef,
-  headlines: string[],
+  items: SummaryInput[],
   geoContext?: string,
   lang?: string,
 ): Promise<SummarizationResult | null> {
   if (!isFeatureAvailable(providerDef.featureId)) return null;
   lastAttemptedProvider = providerDef.provider;
+
+  // Format headlines + descriptions for API with Story markers for better synthesis
+  const headlines = items.map((it, idx) => {
+    const title = it.title.trim();
+    const desc = it.description?.trim();
+    if (desc && desc.length > 30) {
+      if (desc.toLowerCase().includes(title.toLowerCase().slice(0, 20))) {
+        return `Story ${idx + 1}: ${desc}`;
+      }
+      return `Story ${idx + 1}: ${title}. ${desc}`;
+    }
+    return `Story ${idx + 1}: ${title}`;
+  });
+
   try {
     const resp: SummarizeArticleResponse = await summaryBreaker.execute(async () => {
       return newsClient.summarizeArticle({
         provider: providerDef.provider,
         headlines,
-        mode: 'brief',
+        mode: 'synthesis', // Request factual synthesis instead of brief summary
         geoContext: geoContext || '',
         variant: SITE_VARIANT,
         lang: lang || 'en',
@@ -109,7 +128,7 @@ async function tryApiProvider(
 
 // ── Browser T5 provider (different interface -- no API call) ──
 
-async function tryBrowserT5(headlines: string[], modelId?: string, onProgress?: ProgressCallback): Promise<SummarizationResult | null> {
+async function tryBrowserT5(items: SummaryInput[], modelId?: string, onProgress?: ProgressCallback): Promise<SummarizationResult | null> {
   try {
     if (!mlWorker.isAvailable) {
       console.log('[Summarization] Browser ML not available');
@@ -123,12 +142,34 @@ async function tryBrowserT5(headlines: string[], modelId?: string, onProgress?: 
       await mlWorker.loadModel(targetModel);
     }
 
-    const combinedText = headlines.slice(0, 5).join('. ');
-    onProgress?.(5, 5, 'Analyzing headlines...');
+    // Synthesize combined text from titles and descriptions with clear narrative markers
+    const combinedText = items.slice(0, 6).map((it, idx) => {
+      const title = it.title.trim();
+      const desc = it.description?.trim();
+      let content = title;
+
+      if (desc && desc.length > 30) {
+        // If description is just the title, ignore it
+        if (desc.toLowerCase().includes(title.toLowerCase().slice(0, 20))) {
+          content = desc;
+        } else {
+          // Join title and description with a colon to show relationship
+          content = `${title}: ${desc}`;
+        }
+      }
+      return `[Story ${idx + 1}] ${content}`;
+    }).join('\n');
+
+    onProgress?.(5, 5, 'Synthesizing report...');
+    console.log('[Summarization] Requesting browser T5 synthesis for text:', combinedText.slice(0, 250) + '...');
     const [summary] = await mlWorker.summarize([combinedText], targetModel);
 
     if (!summary || summary.length < 5) {
       console.warn('[Summarization] Browser T5 returned invalid/short summary:', summary);
+      // If it's the only one we have, use it as is
+      if (summary && summary.trim().length > 0) {
+        return { summary: summary.trim(), provider: 'browser', model: targetModel, cached: false };
+      }
       return null;
     }
 
@@ -149,7 +190,7 @@ async function tryBrowserT5(headlines: string[], modelId?: string, onProgress?: 
 
 async function runApiChain(
   providers: ApiProviderDef[],
-  headlines: string[],
+  items: SummaryInput[],
   geoContext: string | undefined,
   lang: string | undefined,
   onProgress: ProgressCallback | undefined,
@@ -158,7 +199,7 @@ async function runApiChain(
 ): Promise<SummarizationResult | null> {
   for (const [i, provider] of providers.entries()) {
     onProgress?.(stepOffset + i, totalSteps, `Connecting to ${provider.label}...`);
-    const result = await tryApiProvider(provider, headlines, geoContext, lang);
+    const result = await tryApiProvider(provider, items, geoContext, lang);
     if (result) return result;
   }
   return null;
@@ -170,21 +211,22 @@ async function runApiChain(
  * @param geoContext Optional geographic signal context to include in the prompt
  */
 export async function generateSummary(
-  headlines: string[],
+  items: SummaryInput[],
   onProgress?: ProgressCallback,
   geoContext?: string,
   lang: string = 'en',
   options?: SummarizeOptions,
 ): Promise<SummarizationResult | null> {
-  if (!headlines || headlines.length < 1) {
+  if (!items || items.length < 1) {
     console.warn('[Summarization] No headlines provided');
     return null;
   }
 
   // If only 1 headline, use it as is (no summary needed)
-  if (headlines.length === 1 && headlines[0]) {
+  if (items.length === 1 && items[0]) {
+    const it = items[0];
     return {
-      summary: headlines[0],
+      summary: it.description && it.description.length > 30 ? it.description : it.title,
       provider: 'cache',
       model: 'original',
       cached: false
@@ -192,21 +234,38 @@ export async function generateSummary(
   }
 
   lastAttemptedProvider = 'none';
-  const result = await generateSummaryInternal(headlines, onProgress, geoContext, lang, options);
+  const result = await generateSummaryInternal(items, onProgress, geoContext, lang, options);
 
-  // Track at generateSummary return only (not inside tryApiProvider) to avoid
-  // double-counting beta comparison traffic. Only the winning provider is recorded.
   if (result) {
     trackLLMUsage(result.provider, result.model, result.cached);
-  } else {
-    trackLLMFailure(lastAttemptedProvider);
+    return result;
   }
 
-  return result;
+  trackLLMFailure(lastAttemptedProvider);
+
+  // Final fallback: If all AI attempts fail (including BETA_MODE logic), return a bulleted list of the top headlines
+  // This ensures the user always sees a summary view instead of an error message.
+  console.log('[Summarization] All AI providers exhausted, using manual fallback');
+  const fallbackSummary = items.slice(0, 3)
+    .filter(it => it.title && it.title.trim().length > 0)
+    .map(it => `• ${it.title.trim()}`)
+    .join('\n');
+
+  if (fallbackSummary) {
+    return {
+      summary: fallbackSummary,
+      provider: 'cache',
+      model: 'formatted-headlines',
+      cached: false
+    };
+  }
+
+  console.warn('[Summarization] No headlines available for fallback');
+  return null;
 }
 
 async function generateSummaryInternal(
-  headlines: string[],
+  items: SummaryInput[],
   onProgress: ProgressCallback | undefined,
   geoContext: string | undefined,
   lang: string,
@@ -220,11 +279,11 @@ async function generateSummaryInternal(
       // Model already loaded -- use browser T5-small first
       if (!options?.skipBrowserFallback) {
         onProgress?.(1, totalSteps, 'Running local AI model (beta)...');
-        const browserResult = await tryBrowserT5(headlines, 'summarization', onProgress);
+        const browserResult = await tryBrowserT5(items, 'summarization', onProgress);
         if (browserResult) {
           console.log('[BETA] Browser T5-small:', browserResult.summary);
           const groqProvider = API_PROVIDERS.find(p => p.provider === 'groq');
-          if (groqProvider && !options?.skipCloudProviders) tryApiProvider(groqProvider, headlines, geoContext).then(r => {
+          if (groqProvider && !options?.skipCloudProviders) tryApiProvider(groqProvider, items, geoContext).then(r => {
             if (r) console.log('[BETA] Groq comparison:', r.summary);
           }).catch(() => {});
 
@@ -234,7 +293,7 @@ async function generateSummaryInternal(
 
       // Warm model failed inference -- fallback through API providers
       if (!options?.skipCloudProviders) {
-        const chainResult = await runApiChain(API_PROVIDERS, headlines, geoContext, undefined, onProgress, 2, totalSteps);
+        const chainResult = await runApiChain(API_PROVIDERS, items, geoContext, undefined, onProgress, 2, totalSteps);
         if (chainResult) return chainResult;
       }
     } else {
@@ -246,7 +305,7 @@ async function generateSummaryInternal(
 
       // API providers while model loads
       if (!options?.skipCloudProviders) {
-        const chainResult = await runApiChain(API_PROVIDERS, headlines, geoContext, undefined, onProgress, 1, totalSteps);
+        const chainResult = await runApiChain(API_PROVIDERS, items, geoContext, undefined, onProgress, 1, totalSteps);
         if (chainResult) {
           if (chainResult.provider === 'groq') console.log('[BETA] Groq:', chainResult.summary);
           return chainResult;
@@ -256,7 +315,7 @@ async function generateSummaryInternal(
       // Last resort: try browser T5 (may have finished loading by now)
       if (mlWorker.isAvailable && !options?.skipBrowserFallback) {
         onProgress?.(API_PROVIDERS.length + 1, totalSteps, 'Waiting for local AI model...');
-        const browserResult = await tryBrowserT5(headlines, 'summarization', onProgress);
+        const browserResult = await tryBrowserT5(items, 'summarization', onProgress);
         if (browserResult) return browserResult;
       }
 
@@ -272,17 +331,16 @@ async function generateSummaryInternal(
   let chainResult: SummarizationResult | null = null;
 
   if (!options?.skipCloudProviders) {
-    chainResult = await runApiChain(API_PROVIDERS, headlines, geoContext, lang, onProgress, 1, totalSteps);
+    chainResult = await runApiChain(API_PROVIDERS, items, geoContext, lang, onProgress, 1, totalSteps);
   }
   if (chainResult) return chainResult;
 
   if (!options?.skipBrowserFallback) {
     onProgress?.(totalSteps, totalSteps, 'Inference with browser model...');
-    const browserResult = await tryBrowserT5(headlines, undefined, onProgress);
+    const browserResult = await tryBrowserT5(items, undefined, onProgress);
     if (browserResult) return browserResult;
   }
 
-  console.warn('[Summarization] All providers exhausted without valid summary');
   return null;
 }
 

@@ -6,6 +6,7 @@ import { t } from '@/services/i18n';
 
 export interface TrendingHeadlineInput {
   title: string;
+  description?: string;
   pubDate: Date;
   source: string;
   link?: string;
@@ -13,6 +14,7 @@ export interface TrendingHeadlineInput {
 
 interface StoredHeadline {
   title: string;
+  description?: string;
   source: string;
   link: string;
   publishedAt: number;
@@ -385,6 +387,7 @@ function recordTermCandidates(
     record.timestamps.push(now);
     record.headlines.push({
       title: headline.title,
+      description: headline.description,
       source: headline.source,
       link: headline.link ?? '',
       publishedAt: Number.isFinite(headline.pubDate.getTime()) ? headline.pubDate.getTime() : now,
@@ -517,21 +520,21 @@ async function handleSpike(spike: TrendingSpike, config: TrendingConfig): Promis
     }
 
     const windowHours = Math.round((spike.windowMs / HOUR_MS) * 10) / 10;
-    const headlines = spike.headlines.slice(0, 6).map(h => h.title);
+    const items = spike.headlines.slice(0, 6).map(h => ({ title: h.title, description: h.description }));
     const multiplierText = spike.baseline > 0 ? `${spike.multiplier.toFixed(1)}x baseline` : 'cold-start threshold';
 
     let description = `${spike.term} is appearing across ${spike.uniqueSources} sources (${spike.count} mentions in ${windowHours}h).`;
 
     const now = Date.now();
-    if (config.autoSummarize && headlines.length >= 2 && canRunAutoSummary(now)) {
+    if (config.autoSummarize && items.length >= 1 && canRunAutoSummary(now)) {
       autoSummaryRuns.push(now);
-      const summary = await generateSummary(
-        headlines,
+      const result = await generateSummary(
+        items,
         undefined,
         `Breaking: "${spike.term}" mentioned ${spike.count}x in ${windowHours}h (${multiplierText})`
       );
-      if (summary?.summary) {
-        description = summary.summary;
+      if (result?.summary) {
+        description = result.summary;
       }
     }
 

@@ -351,8 +351,12 @@ export class InsightsPanel extends Panel {
         return;
       }
 
-      // Cap titles sent to AI at 5 to reduce entity conflation in small models
-      const titles = importantClusters.slice(0, 5).map(c => c.primaryTitle);
+      // Cap items sent to AI at 5 to reduce entity conflation in small models
+      const items = importantClusters.slice(0, 5).map(c => ({
+        title: c.primaryTitle,
+        description: c.allItems[0]?.description
+      }));
+      const titles = items.map(it => it.title);
 
       // Step 2: Analyze sentiment (browser-based, fast)
       this.setProgress(2, totalSteps, t('components.insights.analyzingSentiment'));
@@ -380,7 +384,7 @@ export class InsightsPanel extends Panel {
         const geoContext = SITE_VARIANT === 'full'
           ? (focalSummary.aiContext || signalSummary.aiContext) + theaterContext
           : '';
-        const result = await generateSummary(titles, (_step, _total, msg) => {
+        const result = await generateSummary(items, (_step, _total, msg) => {
           // Show sub-progress for summarization
           this.setProgress(3, totalSteps, `Generating brief: ${msg}`);
         }, geoContext, undefined, summarizeOpts);

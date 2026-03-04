@@ -295,6 +295,27 @@ export async function fetchFeed(feed: Feed): Promise<NewsItem[]> {
         const geoMatches = inferGeoHubsFromTitle(title);
         const topGeo = geoMatches[0];
 
+        // Extract description/content for better AI summarization
+        const descEl = item.querySelector('description') || item.querySelector('summary');
+        let description = descEl?.textContent || '';
+        if (!description) {
+          const contentEncoded = item.getElementsByTagNameNS('http://purl.org/rss/1.0/modules/content/', 'encoded');
+          description = contentEncoded.length > 0 ? (contentEncoded[0]!.textContent || '') : '';
+        }
+        // Basic HTML strip, entity decode, and whitespace cleanup
+        description = description
+          .replace(/<[^>]*>?/gm, '')
+          .replace(/&amp;/g, '&')
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>')
+          .replace(/&quot;/g, '"')
+          .replace(/&apos;/g, "'")
+          .replace(/&nbsp;/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        // Limit length to prevent context window issues but keep enough for synthesis
+        if (description.length > 600) description = description.slice(0, 597) + '...';
+
         return {
           source: feed.name,
           title,
@@ -305,6 +326,7 @@ export async function fetchFeed(feed: Feed): Promise<NewsItem[]> {
           ...(topGeo && { lat: topGeo.hub.lat, lon: topGeo.hub.lon, locationName: topGeo.hub.name }),
           lang: feed.lang,
           ...(SITE_VARIANT === 'happy' && { imageUrl: extractImageUrl(item) }),
+          description: description || undefined,
         };
       });
 
@@ -313,6 +335,7 @@ export async function fetchFeed(feed: Feed): Promise<NewsItem[]> {
     recordFeedSuccess(feedScope);
     ingestHeadlines(parsed.map(item => ({
       title: item.title,
+      description: item.description,
       pubDate: item.pubDate,
       source: item.source,
       link: item.link,

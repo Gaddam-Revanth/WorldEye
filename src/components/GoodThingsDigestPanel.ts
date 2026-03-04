@@ -72,7 +72,7 @@ export class GoodThingsDigestPanel extends Panel {
         // Pass [title, source] as two headlines to satisfy generateSummary's
         // minimum length requirement (headlines.length >= 2).
         const result = await generateSummary(
-          [item.title, item.source],
+          [{ title: item.title, description: item.description }],
           undefined,
           item.locationName,
         );

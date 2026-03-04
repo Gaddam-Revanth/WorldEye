@@ -183,21 +183,30 @@ async function summarizeTexts(texts: string[], modelId = 'summarization'): Promi
     const pipe = loadedPipelines.get(modelId)!;
 
     const results: string[] = [];
-    for (const text of texts) {
+    for (const [i, text] of texts.entries()) {
       if (!text || text.trim().length < 5) {
+        console.log(`[MLWorker] Skipping short text at index ${i}`);
         results.push(text);
         continue;
       }
 
-      console.log(`[MLWorker] Summarizing (${modelId}): ${text.slice(0, 50)}...`);
+      console.log(`[MLWorker] Summarizing (${modelId}) [${i+1}/${texts.length}]: ${text.slice(0, 80)}...`);
+      const startTime = Date.now();
       const output = await pipe(`summarize: ${text}`, {
-        max_new_tokens: 64,
-        min_length: 5,
+        max_new_tokens: 128,
+        min_length: 15,
+        repetition_penalty: 1.2,
         early_stopping: true,
       });
-      const result = (output as Array<{ generated_text: string }>)[0];
-      const summary = result?.generated_text?.trim() || '';
-      console.log(`[MLWorker] Summary result: ${summary.slice(0, 50)}...`);
+
+      let summary = '';
+      if (Array.isArray(output)) {
+        summary = output[0]?.generated_text?.trim() || '';
+      } else if (typeof output === 'object' && output !== null && 'generated_text' in output) {
+        summary = (output as { generated_text: string }).generated_text?.trim() || '';
+      }
+
+      console.log(`[MLWorker] Summary result in ${Date.now() - startTime}ms: ${summary.slice(0, 80)}...`);
       results.push(summary);
     }
 

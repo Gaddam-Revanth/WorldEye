@@ -1097,9 +1097,9 @@ canvas,
   background: linear-gradient(135deg, rgba(68, 136, 255, 0.08), rgba(136, 68, 255, 0.08));
   border-radius: 6px;
   border-left: 3px solid var(--accent);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.5;
-  max-height: 100px;
+  max-height: 350px;
   overflow-y: auto;
   flex-shrink: 0;
 }

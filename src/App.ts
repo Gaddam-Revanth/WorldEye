@@ -279,13 +279,12 @@ export class App {
     await initI18n();
     const aiFlow = getAiFlowSettings();
     if (aiFlow.browserModel || isDesktopRuntime()) {
-      await mlWorker.init();
-      const caps = mlWorker.mlCapabilities;
-      try {
+      mlWorker.init().then(() => {
+        const caps = mlWorker.mlCapabilities;
         if (caps && caps.isSupported && caps.estimatedMemoryMB >= ML_THRESHOLDS.memoryBudgetMB) {
-          mlWorker.loadModel('summarization-beta').catch(() => {});
+          mlWorker.loadModel('summarization').catch(() => {});
         }
-      } catch {}
+      }).catch(() => {});
     }
 
     this.unsubAiFlow = subscribeAiFlowChange((key) => {

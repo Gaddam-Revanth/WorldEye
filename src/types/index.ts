@@ -29,6 +29,8 @@ export interface NewsItem {
   happyCategory?: import('@/services/positive-classifier').HappyContentCategory;
   // Image URL extracted from RSS media/enclosure tags
   imageUrl?: string;
+  // Article summary/snippet from RSS description
+  description?: string;
 }
 
 export type VelocityLevel = 'normal' | 'elevated' | 'spike';

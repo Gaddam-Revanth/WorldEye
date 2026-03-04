@@ -36,7 +36,7 @@ export class NewsPanel extends Panel {
   // Panel summary feature
   private summaryBtn: HTMLButtonElement | null = null;
   private summaryContainer: HTMLElement | null = null;
-  private currentHeadlines: string[] = [];
+  private currentItems: import('@/services').SummaryInput[] = [];
   private isSummarizing = false;
 
   constructor(id: string, title: string, options: { clustered?: boolean } = {}) {
@@ -126,7 +126,7 @@ export class NewsPanel extends Panel {
 
   private async handleSummarize(): Promise<void> {
     if (this.isSummarizing || !this.summaryContainer || !this.summaryBtn) return;
-    if (this.currentHeadlines.length === 0) return;
+    if (this.currentItems.length === 0) return;
 
     // Check cache first (include variant, version, and language)
     const currentLang = getCurrentLanguage();
@@ -146,7 +146,7 @@ export class NewsPanel extends Panel {
 
     try {
       const result = await generateSummary(
-        this.currentHeadlines.slice(0, 8),
+        this.currentItems.slice(0, 8),
         (step, total, msg) => {
           if (this.summaryContainer) {
             this.summaryContainer.innerHTML = `<div class="panel-summary-loading">${escapeHtml(msg)} (${step}/${total})</div>`;
@@ -162,9 +162,10 @@ export class NewsPanel extends Panel {
         this.summaryContainer.innerHTML = `<div class="panel-summary-error">${t('components.newsPanel.summaryFailed')}</div>`;
         setTimeout(() => this.hideSummary(), 5000);
       }
-    } catch {
-      this.summaryContainer.innerHTML = '<div class="panel-summary-error">Summary failed</div>';
-      setTimeout(() => this.hideSummary(), 3000);
+    } catch (error) {
+      console.error('[NewsPanel] Summary generation failed:', error);
+      this.summaryContainer.innerHTML = `<div class="panel-summary-error">${t('components.newsPanel.summaryFailed')}</div>`;
+      setTimeout(() => this.hideSummary(), 5000);
     } finally {
       this.isSummarizing = false;
       this.summaryBtn.innerHTML = '✨';
@@ -208,9 +209,11 @@ export class NewsPanel extends Panel {
   private showSummary(summary: string): void {
     if (!this.summaryContainer) return;
     this.summaryContainer.style.display = 'block';
+    // Replace newlines with <br> for manual fallback list formatting
+    const formattedSummary = escapeHtml(summary).replace(/\n/g, '<br>');
     this.summaryContainer.innerHTML = `
       <div class="panel-summary-content">
-        <span class="panel-summary-text">${escapeHtml(summary)}</span>
+        <span class="panel-summary-text">${formattedSummary}</span>
         <button class="panel-summary-close" title="${t('components.newsPanel.close')}">×</button>
       </div>
     `;
@@ -285,7 +288,7 @@ export class NewsPanel extends Panel {
     this.renderRequestId += 1; // Cancel in-flight clustering from previous renders.
     this.setDataBadge('live');
     this.setCount(0);
-    this.currentHeadlines = [];
+    this.currentItems = [];
     this.setContent(`<div class="panel-empty">${escapeHtml(message)}</div>`);
   }
 
@@ -306,10 +309,10 @@ export class NewsPanel extends Panel {
 
   private renderFlat(items: NewsItem[]): void {
     this.setCount(items.length);
-    this.currentHeadlines = items
-      .slice(0, 5)
-      .map(item => item.title)
-      .filter((title): title is string => typeof title === 'string' && title.trim().length > 0);
+    this.currentItems = items
+      .slice(0, 10)
+      .map(item => ({ title: item.title, description: item.description }))
+      .filter(it => it.title && it.title.trim().length > 0);
 
     const html = items
       .map(
@@ -345,8 +348,19 @@ export class NewsPanel extends Panel {
     const totalItems = sorted.reduce((sum, c) => sum + c.sourceCount, 0);
     this.setCount(totalItems);
 
-    // Store headlines for summarization (cap at 5 to reduce entity conflation in small models)
-    this.currentHeadlines = sorted.slice(0, 5).map(c => c.primaryTitle);
+    // Store items for summarization (cap at 8 to provide enough context for synthesis)
+    this.currentItems = sorted.slice(0, 8).map(c => {
+      // Find the richest description in the cluster (longest non-empty string)
+      const bestDesc = c.allItems.reduce((best, current) => {
+        const desc = current.description?.trim() || '';
+        return desc.length > best.length ? desc : best;
+      }, '');
+
+      return {
+        title: c.primaryTitle,
+        description: bestDesc || undefined
+      };
+    });
 
     const clusterIds = sorted.map(c => c.id);
     let newItemIds: Set<string>;

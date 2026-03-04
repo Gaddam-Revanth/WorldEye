@@ -17,7 +17,7 @@ make install    # one-time: installs buf, sebuf plugins, npm deps, proto deps
 This installs:
 
 - **buf** — proto linting, dependency management, and code generation orchestrator
-- **protoc-gen-ts-client** — generates TypeScript client classes (from [sebuf](https://github.com/SebastienMelki/sebuf))
+- **protoc-gen-ts-client** — generates TypeScript client classes
 - **protoc-gen-ts-server** — generates TypeScript server handler interfaces (from sebuf)
 - **protoc-gen-openapiv3** — generates OpenAPI v3 specs (from sebuf)
 - **npm dependencies** — all Node.js packages

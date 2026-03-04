@@ -4035,10 +4035,4 @@ See **[docs/ADDING_ENDPOINTS.md](ADDING_ENDPOINTS.md)** for the complete guide c
 
 MIT
 
-## Author
-
-**Elie Habib**
-
----
-
 *Built for situational awareness and open-source intelligence gathering.*

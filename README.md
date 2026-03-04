@@ -553,7 +553,7 @@ Detected spikes are auto-summarized via Groq (rate-limited to 5 summaries/hour) 
 
 ### Proto-First API Contracts
 
-The entire API surface is defined in Protocol Buffer (`.proto`) files using [sebuf](https://github.com/SebastienMelki/sebuf) HTTP annotations. Code generation produces TypeScript clients, server handler stubs, and OpenAPI 3.1.0 documentation from a single source of truth — eliminating request/response schema drift between frontend and backend.
+The entire API surface is defined in Protocol Buffer (`.proto`) files using sebuf HTTP annotations. Code generation produces TypeScript clients, server handler stubs, and OpenAPI 3.1.0 documentation from a single source of truth — eliminating request/response schema drift between frontend and backend.
 
 **20 service domains** cover every data vertical:
 
@@ -1560,42 +1560,9 @@ GNU Affero General Public License v3.0 (AGPL-3.0) — see [LICENSE](LICENSE) for
 
 ---
 
-## Author
+## License
 
-**Elie Habib** — [GitHub](https://github.com/koala73)
-
----
-
-## Contributors
-
-Thanks to everyone who has contributed to World Monitor:
-
-[@SebastienMelki](https://github.com/SebastienMelki),
-[@Lib-LOCALE](https://github.com/Lib-LOCALE),
-[@lawyered0](https://github.com/lawyered0),
-[@elzalem](https://github.com/elzalem),
-[@Rau1CS](https://github.com/Rau1CS),
-[@Sethispr](https://github.com/Sethispr),
-[@InlitX](https://github.com/InlitX),
-[@Ahmadhamdan47](https://github.com/Ahmadhamdan47),
-[@K35P](https://github.com/K35P),
-[@Niboshi-Wasabi](https://github.com/Niboshi-Wasabi),
-[@pedroddomingues](https://github.com/pedroddomingues),
-[@haosenwang1018](https://github.com/haosenwang1018),
-[@aa5064](https://github.com/aa5064),
-[@cwnicoletti](https://github.com/cwnicoletti),
-[@facusturla](https://github.com/facusturla),
-[@toasterbook88](https://github.com/toasterbook88)
-
----
-
-## Security Acknowledgments
-
-We thank the following researchers for responsibly disclosing security issues:
-
-- **Cody Richard** — Disclosed three security findings covering IPC command exposure via DevTools in production builds, renderer-to-sidecar trust boundary analysis, and the global fetch patch credential injection architecture (2025)
-
-If you discover a vulnerability, please see our [Security Policy](./SECURITY.md) for responsible disclosure guidelines.
+GNU Affero General Public License v3.0 (AGPL-3.0) — see [LICENSE](LICENSE) for details.
 
 ---
 
